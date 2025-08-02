@@ -1,3 +1,11 @@
+"""
+Модель генерации изображений.
+
+Содержит:
+- Основные параметры генерации (prompt, model_version и т.д.)
+- Связи с пользователем и заказом
+- Статусы выполнения генерации
+"""
 import uuid
 from datetime import datetime
 from typing import Optional
@@ -11,9 +19,10 @@ from backend.app.models.user import User
 
 
 class Generation(Base):
-    """Main generation model"""
+    """Модель задачи генерации изображения"""
     __tablename__ = "generations"
 
+    # Основные поля
     id: Mapped[uuid.UUID] = mapped_column(
         SQLUUID(as_uuid=True),
         primary_key=True,
@@ -34,12 +43,12 @@ class Generation(Base):
         default="kandinsky-2.1"
     )
     result_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
-    # Relationships
+    # Связи
     user: Mapped["User"] = relationship(back_populates="generations")
     order: Mapped[Optional["Order"]] = relationship(back_populates="generation")
 
 
-# Add this alias for backward compatibility
+# Псевдоним для обратной совместимости
 GenerationTask = Generation
