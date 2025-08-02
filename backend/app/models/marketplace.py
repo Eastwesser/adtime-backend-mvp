@@ -10,6 +10,7 @@ from uuid import UUID
 from sqlalchemy import String, ForeignKey, JSON, Float, Integer, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from backend.app.models import User, Order
 from backend.app.models.base import Base
 
 

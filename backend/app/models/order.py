@@ -15,13 +15,41 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.models import Factory, MarketItem
 from backend.app.models.base import Base
+from backend.app.models.chat import ChatMessage
 from backend.app.models.generation import GenerationTask
 from backend.app.models.payment import Payment
+from backend.app.models.review import Review
 from backend.app.models.user import User
+from ..core.order_status import OrderStatus as CoreOrderStatus
 
 
 class Order(Base):
-    """Модель заказа на производство рекламного продукта"""
+    """Основная модель заказа в базе данных.
+
+    Соответствует таблице 'orders' и содержит:
+    - Все основные поля заказа
+    - Связи с другими моделями через ForeignKey
+    - SQLAlchemy Enum для статусов (должен дублировать значения из OrderStatus)
+
+    Атрибуты:
+        id: Уникальный идентификатор заказа
+        user_id: ID пользователя, создавшего заказ
+        generation_id: ID связанной генерации (если есть)
+        status: Текущий статус заказа из OrderStatus
+        amount: Общая сумма заказа в рублях
+        design_specs: Техническое задание в формате JSON
+        production_deadline: Крайний срок производства
+        production_errors: Ошибки при производстве
+
+    Связи:
+        user: Пользователь, создавший заказ
+        generation: Связанная генерация изображения
+        payment: Данные об оплате
+        factory: Производственное предприятие
+        market_item: Товар из маркетплейса (если заказ на готовый товар)
+        messages: История сообщений в чате заказа
+        review: Отзыв о выполненном заказе
+    """
     __tablename__ = "orders"
 
     # Основные поля
@@ -40,8 +68,17 @@ class Order(Base):
         nullable=True
     )
     status: Mapped[str] = mapped_column(
-        Enum("created", "paid", "production", "shipped", "completed", name="order_status"),
-        default="created"
+        Enum(
+            CoreOrderStatus.CREATED.value,
+            CoreOrderStatus.PAID.value,
+            CoreOrderStatus.PRODUCTION.value,
+            CoreOrderStatus.SHIPPED.value,
+            CoreOrderStatus.COMPLETED.value,
+            CoreOrderStatus.CANCELLED.value,
+            name="order_status"
+        ),
+        default=CoreOrderStatus.CREATED.value,
+        doc=f"Статус заказа. Допустимые значения: {list(CoreOrderStatus)}"
     )
     amount: Mapped[float] = mapped_column(Float, nullable=False)
     design_specs: Mapped[Dict] = mapped_column(JSON, nullable=False)  # Техническое задание
@@ -58,11 +95,14 @@ class Order(Base):
     factory_id: Mapped[Optional[UUID]] = mapped_column(ForeignKey("factories.id"), nullable=True)
     market_item_id: Mapped[Optional[UUID]] = mapped_column(ForeignKey("market_items.id"), nullable=True)
 
+    # Сообщения в чате
+    chat_messages: Mapped[List["ChatMessage"]] = relationship(
+        back_populates="order",
+        cascade="all, delete-orphan",
+        order_by="ChatMessage.created_at"
+    )
+
     # Связи с производством
     factory: Mapped[Optional["Factory"]] = relationship(back_populates="orders")
     market_item: Mapped[Optional["MarketItem"]] = relationship(back_populates="orders")
-
-
-class OrderStatus:
-    """Заглушка для будущей реализации статусов заказа"""
-    pass
+    review: Mapped[Optional["Review"]] = relationship(back_populates="order")
