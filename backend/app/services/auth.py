@@ -33,7 +33,7 @@ class AuthService:
 
     def create_access_token(self, user: User) -> Token:
         expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now() + expires_delta
 
         to_encode = {
             "sub": str(user.id),

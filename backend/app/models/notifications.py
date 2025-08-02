@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 from typing import Optional, Dict
 
-from sqlalchemy import UUID, Enum, ForeignKey, JSON, Text, DateTime, Boolean
+from sqlalchemy import UUID, Enum, ForeignKey, JSON, Text, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.models.base import Base

@@ -12,7 +12,7 @@ from typing import List, Optional
 from sqlalchemy import UUID, String, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.notifications import Notification
+from backend.app.models.notifications import Notification
 from backend.app.models import Order, Subscription
 from backend.app.models.base import Base
 from backend.app.models.generation import GenerationTask

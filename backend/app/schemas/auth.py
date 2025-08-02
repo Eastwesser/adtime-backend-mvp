@@ -15,17 +15,17 @@ class Token(BaseModel):
         expires_in (Optional[int]): Время жизни токена в секундах (опционально)
     """
     access_token: str = Field(
-        default=...,
+        ...,
         description="JWT токен для аутентификации",
-        example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     )
     token_type: str = Field(
-        default=...,
+        ...,
         description="Тип токена",
         example="bearer"
     )
     expires_in: Optional[int] = Field(
-        default=...,
+        None,
         description="Время жизни токена в секундах",
         example=3600
     )
@@ -41,19 +41,18 @@ class TokenResponse(Token):
         scopes (List[str]): Список разрешений токена
     """
     refresh_token: Optional[str] = Field(
-        default=...,
+        None,
         description="Токен для обновления доступа",
         example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
         json_schema_extra={"secure": True}
     )
     issued_at: datetime = Field(
-        default=...,
         default_factory=datetime.now,
         description="Время выдачи токена",
-        example="2023-01-01T00:00:00Z"
+        example="2025-01-01T00:00:00Z"
     )
     token_id: str = Field(
-        default=...,
+        ...,
         description="Уникальный идентификатор токена",
         example="tok_1MqLW2P4zWv4g4Xs4Z6Xz4W4"
     )
@@ -70,7 +69,7 @@ class TokenResponse(Token):
                 "token_type": "bearer",
                 "expires_in": 3600,
                 "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                "issued_at": "2023-01-01T00:00:00Z",
+                "issued_at": "2025-01-01T00:00:00Z",
                 "token_id": "tok_1MqLW2P4zWv4g4Xs4Z6Xz4W4",
                 "scopes": ["read", "write"]
             }
@@ -86,20 +85,20 @@ class AuthRequest(BaseModel):
         device_id (Optional[str]): Идентификатор устройства (опционально)
     """
     email: str = Field(
-        default=...,
+        ...,
         example="user@example.com",
         description="Email пользователя",
         max_length=255
     )
     password: str = Field(
-        default=...,
+        ...,
         min_length=8,
         max_length=64,
         description="Пароль пользователя",
         json_schema_extra={"secure": True}
     )
     device_id: Optional[str] = Field(
-        default=...,
+        None,
         description="Идентификатор устройства для привязки токена",
         example="device_12345",
     )
@@ -113,8 +112,14 @@ class UserLoginResponse(BaseModel):
         token (TokenResponse): Токен аутентификации
         requires_2fa (bool): Требуется ли двухфакторная аутентификация
     """
-    user: UserResponse = Field(..., description="Данные пользователя")
-    token: TokenResponse = Field(..., description="Токен аутентификации")
+    user: UserResponse = Field(
+        ...,
+        description="Данные пользователя",
+    )
+    token: TokenResponse = Field(
+        ...,
+        description="Токен аутентификации",
+    )
     requires_2fa: bool = Field(
         default=False,
         description="Требуется ли двухфакторная аутентификация"
@@ -127,14 +132,14 @@ class UserLoginResponse(BaseModel):
                     "id": "a1b2c3d4-5678-9012-3456-789012345678",
                     "email": "user@example.com",
                     "role": "user",
-                    "created_at": "2023-01-01T00:00:00Z"
+                    "created_at": "2025-01-01T00:00:00Z"
                 },
                 "token": {
                     "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                     "token_type": "bearer",
                     "expires_in": 3600,
                     "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                    "issued_at": "2023-01-01T00:00:00Z",
+                    "issued_at": "2025-01-01T00:00:00Z",
                     "token_id": "tok_1MqLW2P4zWv4g4Xs4Z6Xz4W4",
                     "scopes": ["read", "write"]
                 },
