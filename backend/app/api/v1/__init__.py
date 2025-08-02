@@ -11,9 +11,9 @@ from .users import router as users_router
 router = APIRouter()
 
 # Include all routers with their prefixes
-router.include_router(auth_router)
-router.include_router(payment_router)
-router.include_router(users_router)
-router.include_router(generate_router)
-router.include_router(marketplace_router)
+router.include_router(auth_router, prefix="/auth", tags=["Auth"])
+router.include_router(payment_router, prefix="/payment", tags=["Payment"])
+router.include_router(users_router, prefix="/users", tags=["Users"])
+router.include_router(generate_router, prefix="/generate", tags=["Generate"])
+router.include_router(marketplace_router, prefix="/marketplace", tags=["Marketplace"])
 router.include_router(admin_router, prefix="/admin", tags=["Admin"])
