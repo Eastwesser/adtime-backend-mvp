@@ -25,7 +25,7 @@ class OrderCreate(BaseModel):
         }
     )
     design_specs: Dict = Field(
-        ...,
+        default=...,
         example={
             "size": "A4",
             "material": "premium_paper",
@@ -39,12 +39,12 @@ class OrderCreate(BaseModel):
     factory_id: Optional[uuid.UUID] = Field(
         default=None,
         example="b2c3d4e5-6789-0123-4567-890123456789",
-        description="ID фабрики для производства (если известен)"
+        description="ID фабрики для производства (если известен)",
     )
     market_item_id: Optional[uuid.UUID] = Field(
         default=None,
         example="c3d4e5f6-7890-1234-5678-901234567890",
-        description="ID товара из маркетплейса (если заказ на готовый продукт)"
+        description="ID товара из маркетплейса (если заказ на готовый продукт)",
     )
 
     model_config = ConfigDict(
@@ -97,54 +97,57 @@ class OrderStatus(str, Enum):
 class OrderBase(BaseModel):
     """Базовая схема для создания/обновления заказа."""
     generation_id: Optional[uuid.UUID] = Field(
-        default=None,
+        default=...,
         example="a1b2c3d4-5678-9012-3456-789012345678",
-        description="ID связанной генерации изображения"
+        description="ID связанной генерации изображения",
     )
     design_specs: Dict = Field(
-        ...,
+        default=...,
         example={
             "size": "A4",
             "material": "premium_paper",
             "color_profile": "CMYK"
         },
-        description="Технические параметры заказа в JSON-формате"
+        description="Технические параметры заказа в JSON-формате",
     )
 
 
 class OrderResponse(OrderBase):
     """Схема для возврата данных о заказе через API."""
     id: uuid.UUID = Field(
-        ...,
+        default=...,
         example="a1b2c3d4-5678-9012-3456-789012345678",
-        description="Уникальный идентификатор заказа"
+        description="Уникальный идентификатор заказа",
     )
     status: OrderStatus = Field(
-        ...,
+        default=...,
         example=OrderStatus.CREATED,
-        description="Текущий статус заказа"
+        description="Текущий статус заказа",
     )
     amount: float = Field(
-        ...,
+        default=...,
         example=1500.0,
         ge=0,
-        description="Сумма заказа в рублях"
+        description="Сумма заказа в рублях",
     )
-    created_at: datetime = Field(..., description="Дата создания заказа (UTC)")
+    created_at: datetime = Field(
+        default=...,
+        description="Дата создания заказа (UTC)",
+    )
     production_deadline: Optional[datetime] = Field(
-        default=None,
+        default=...,
         example="2026-01-10T12:00:00Z",
-        description="Планируемая дата завершения производства"
+        description="Планируемая дата завершения производства",
     )
     production_errors: Optional[List[str]] = Field(
-        default=None,
+        default=...,
         example=["Не хватило материала", "Задержка поставки"],
-        description="Ошибки производства"
+        description="Ошибки производства",
     )
     user_id: uuid.UUID = Field(
-        ...,
+        default=...,
         example="b2c3d4e5-6789-0123-4567-890123456789",
-        description="ID пользователя-заказчика"
+        description="ID пользователя-заказчика",
     )
 
     model_config = ConfigDict(

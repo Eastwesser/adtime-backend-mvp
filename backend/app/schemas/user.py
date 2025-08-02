@@ -26,6 +26,7 @@ class UserResponse(UserBase):
     id: uuid.UUID
     telegram_id: Optional[str]
     created_at: datetime
+    email: str
     role: str
 
     class Config:

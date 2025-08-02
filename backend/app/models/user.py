@@ -12,6 +12,7 @@ from typing import List, Optional
 from sqlalchemy import UUID, String, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.models.notifications import Notification
 from backend.app.models import Order, Subscription
 from backend.app.models.base import Base
 from backend.app.models.generation import GenerationTask
@@ -50,3 +51,9 @@ class User(Base):
     generations: Mapped[List["GenerationTask"]] = relationship(back_populates="user")  # Генерации пользователя
     orders: Mapped[List["Order"]] = relationship(back_populates="user")  # Заказы пользователя
     subscription: Mapped["Subscription"] = relationship(back_populates="user")  # Подписка пользователя
+    notifications: Mapped[List["Notification"]] = relationship(
+        "Notification",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        order_by="Notification.created_at.desc()"
+    )
