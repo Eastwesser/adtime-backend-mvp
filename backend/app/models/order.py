@@ -1,3 +1,11 @@
+"""
+Модель заказа на производство.
+
+Содержит:
+- Основные данные заказа
+- Связи с пользователем, генерацией, оплатой и производством
+- Статусы заказа
+"""
 import uuid
 from datetime import datetime
 from typing import Optional, Dict, List
@@ -13,9 +21,10 @@ from backend.app.models.user import User
 
 
 class Order(Base):
-    """Модель заказа на производство"""
+    """Модель заказа на производство рекламного продукта"""
     __tablename__ = "orders"
 
+    # Основные поля
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -35,8 +44,8 @@ class Order(Base):
         default="created"
     )
     amount: Mapped[float] = mapped_column(Float, nullable=False)
-    design_specs: Mapped[Dict] = mapped_column(JSON, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    design_specs: Mapped[Dict] = mapped_column(JSON, nullable=False)  # Техническое задание
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     production_deadline: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     production_errors: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)
 
@@ -45,14 +54,15 @@ class Order(Base):
     generation: Mapped[Optional["GenerationTask"]] = relationship(back_populates="order")
     payment: Mapped["Payment"] = relationship(back_populates="order")
 
-    # Добавить в модель Order:
+    # Производственные данные
     factory_id: Mapped[Optional[UUID]] = mapped_column(ForeignKey("factories.id"), nullable=True)
     market_item_id: Mapped[Optional[UUID]] = mapped_column(ForeignKey("market_items.id"), nullable=True)
 
-    # Обновить связи:
+    # Связи с производством
     factory: Mapped[Optional["Factory"]] = relationship(back_populates="orders")
     market_item: Mapped[Optional["MarketItem"]] = relationship(back_populates="orders")
 
 
 class OrderStatus:
+    """Заглушка для будущей реализации статусов заказа"""
     pass
