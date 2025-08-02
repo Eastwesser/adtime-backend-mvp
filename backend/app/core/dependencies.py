@@ -6,28 +6,33 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.core.config import settings
-from backend.app.repositories.factory import FactoryRepository
-from backend.app.repositories.generation import GenerationRepository
-from backend.app.repositories.marketplace import MarketplaceRepository
-from backend.app.repositories.order import OrderRepository
-from backend.app.repositories.payment import PaymentRepository
-from backend.app.repositories.subscription import SubscriptionRepository
-from backend.app.repositories.user import UserRepository
-from backend.app.schemas.user import UserResponse
-from backend.app.services.auth import AuthService
-from backend.app.services.generation import GenerationService
-from backend.app.services.kandinsky import KandinskyAPI
-from backend.app.services.marketplace import MarketplaceService
-from backend.app.services.order import OrderService
-from backend.app.services.payment import PaymentService
-from backend.app.services.subscription import SubscriptionService
+from app.core.config import settings
+from app.core.websocket_manager import ws_manager, ConnectionManager
+from app.repositories.factory import FactoryRepository
+from app.repositories.generation import GenerationRepository
+from app.repositories.marketplace import MarketplaceRepository
+from app.repositories.order import OrderRepository
+from app.repositories.payment import PaymentRepository
+from app.repositories.subscription import SubscriptionRepository
+from app.repositories.user import UserRepository
+from app.schemas.user import UserResponse
+from app.services.auth import AuthService
+from app.services.generation import GenerationService
+from app.services.kandinsky import KandinskyAPI
+from app.services.marketplace import MarketplaceService
+from app.services.order import OrderService
+from app.services.payment import PaymentService
+from app.services.subscription import SubscriptionService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
 def get_db():
     return None
+
+
+def get_ws_manager() -> ConnectionManager:
+    return ws_manager
 
 
 async def get_current_user(

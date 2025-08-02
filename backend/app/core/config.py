@@ -8,6 +8,7 @@ from yookassa import Configuration
 
 
 class Settings(BaseSettings):
+    PROJECT_NAME: str = "AdTime Marketplace"
     DEBUG: bool = Field(default=False, env="DEBUG")
 
     # Database - Updated to use PostgresDsn for validation
