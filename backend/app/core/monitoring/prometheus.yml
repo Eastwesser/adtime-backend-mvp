@@ -1,0 +1,6 @@
+scrape_configs:
+  - job_name: "adtime"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: [ "backend:8042" ]
+    scrape_interval: 15s
