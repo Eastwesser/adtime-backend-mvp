@@ -1,4 +1,11 @@
-# backend/app/models/user.py
+"""
+Модель пользователя системы.
+
+Содержит:
+- Основные данные пользователя
+- Роли (user, designer, admin)
+- Связи с другими моделями
+"""
 import uuid
 from typing import List, Optional
 
@@ -11,9 +18,10 @@ from backend.app.models.generation import GenerationTask
 
 
 class User(Base):
-    """Модель пользователя с ролями и подпиской"""
+    """Модель пользователя системы с ролями и подпиской"""
     __tablename__ = "users"
 
+    # Основные данные пользователя
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -38,7 +46,7 @@ class User(Base):
         nullable=True
     )
 
-    # Связи
-    generations: Mapped[List["GenerationTask"]] = relationship(back_populates="user")
-    orders: Mapped[List["Order"]] = relationship(back_populates="user")
-    subscription: Mapped["Subscription"] = relationship(back_populates="user")
+    # Связи с другими моделями
+    generations: Mapped[List["GenerationTask"]] = relationship(back_populates="user")  # Генерации пользователя
+    orders: Mapped[List["Order"]] = relationship(back_populates="user")  # Заказы пользователя
+    subscription: Mapped["Subscription"] = relationship(back_populates="user")  # Подписка пользователя
