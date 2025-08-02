@@ -8,26 +8,82 @@ from pydantic import BaseModel, EmailStr, Field
 
 
 class UserRole(str, Enum):
+    """Роли пользователей в системе.
+
+    Values:
+        USER: Обычный пользователь
+        DESIGNER: Дизайнер (может публиковать работы в маркетплейсе)
+        ADMIN: Администратор системы
+    """
     USER = "user"
     DESIGNER = "designer"
     ADMIN = "admin"
 
 
 class UserBase(BaseModel):
-    email: EmailStr
-    role: UserRole = UserRole.USER
+    """Базовая схема пользователя.
+
+    Attributes:
+        email (EmailStr): Email пользователя (валидируется)
+        role (UserRole): Роль пользователя (по умолчанию USER)
+    """
+    email: EmailStr = Field(
+        ...,
+        description="Email пользователя",
+        example="user@example.com"
+    )
+    role: UserRole = Field(
+        default=UserRole.USER,
+        description="Роль пользователя в системе"
+    )
 
 
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=8, max_length=50)
+    """Схема для создания пользователя.
+
+    Добавляет к UserBase поле password.
+    """
+    password: str = Field(
+        ...,
+        min_length=8,
+        max_length=50,
+        description="Пароль пользователя",
+        example="securePassword123!"
+    )
 
 
 class UserResponse(UserBase):
-    id: uuid.UUID
-    telegram_id: Optional[str]
-    created_at: datetime
-    email: str
-    role: str
+    """Схема для ответа с данными пользователя.
+
+    Наследует UserBase и добавляет:
+        id (UUID): Уникальный идентификатор пользователя
+        telegram_id (Optional[str]): ID в Telegram (если привязан)
+        created_at (datetime): Дата регистрации
+    """
+    id: uuid.UUID = Field(
+        ...,
+        description="Уникальный идентификатор пользователя",
+        example="a1b2c3d4-5678-9012-3456-789012345678"
+    )
+    telegram_id: Optional[str] = Field(
+        None,
+        description="ID пользователя в Telegram",
+        example="123456789"
+    )
+    created_at: datetime = Field(
+        ...,
+        description="Дата и время регистрации",
+        example="2023-01-01T00:00:00Z"
+    )
 
     class Config:
-        from_attributes = True  # Для совместимости с ORM (альтернатива orm_mode)
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "id": "a1b2c3d4-5678-9012-3456-789012345678",
+                "email": "user@example.com",
+                "role": "user",
+                "telegram_id": "123456789",
+                "created_at": "2023-01-01T00:00:00Z"
+            }
+        }

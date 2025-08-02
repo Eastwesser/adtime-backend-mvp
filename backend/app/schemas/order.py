@@ -174,11 +174,11 @@ class OrderResponse(OrderBase):
 class OrderUpdate(BaseModel):
     """Схема для обновления заказа"""
     status: Optional[OrderStatus] = Field(
-        None,
+        default=...,
         description="Новый статус заказа"
     )
     production_deadline: Optional[datetime] = Field(
-        None,
+        default=...,
         description="Обновленный срок производства"
     )
 
@@ -195,39 +195,40 @@ class ChatMessageSchema(BaseModel):
     Используется для отображения истории переписки по заказу.
     """
     id: uuid.UUID = Field(
-        ...,
+        default=...,
         example="d3e4f5g6-7890-1234-5678-901234567890",
         description="Уникальный идентификатор сообщения"
     )
     order_id: uuid.UUID = Field(
-        ...,
+        default=...,
         example="a1b2c3d4-5678-9012-3456-789012345678",
         description="ID связанного заказа"
     )
     sender_id: uuid.UUID = Field(
-        ...,
+        default=...,
         example="b2c3d4e5-6789-0123-4567-890123456789",
         description="ID отправителя (пользователя)"
     )
     sender_role: Literal["customer", "designer", "support"] = Field(
-        ...,
+        default=...,
         example="customer",
         description="Роль отправителя"
     )
     message: str = Field(
-        ...,
+        default=...,
         example="Когда будет готов мой заказ?",
         description="Текст сообщения",
         min_length=1,
         max_length=2000
     )
     attachments: List[str] = Field(
+        default=...,
         default_factory=list,
         example=["https://storage.example.com/files/123.pdf"],
         description="Ссылки на прикрепленные файлы"
     )
     created_at: datetime = Field(
-        ...,
+        default=...,
         example="2023-01-01T12:00:00Z",
         description="Дата и время отправки (UTC)"
     )

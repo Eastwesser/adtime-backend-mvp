@@ -15,17 +15,17 @@ class Token(BaseModel):
         expires_in (Optional[int]): Время жизни токена в секундах (опционально)
     """
     access_token: str = Field(
-        ...,
+        default=...,
         description="JWT токен для аутентификации",
         example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
     )
     token_type: str = Field(
-        default="bearer",
+        default=...,
         description="Тип токена",
         example="bearer"
     )
     expires_in: Optional[int] = Field(
-        None,
+        default=...,
         description="Время жизни токена в секундах",
         example=3600
     )
@@ -41,18 +41,19 @@ class TokenResponse(Token):
         scopes (List[str]): Список разрешений токена
     """
     refresh_token: Optional[str] = Field(
-        None,
+        default=...,
         description="Токен для обновления доступа",
         example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
         json_schema_extra={"secure": True}
     )
     issued_at: datetime = Field(
+        default=...,
         default_factory=datetime.now,
         description="Время выдачи токена",
         example="2023-01-01T00:00:00Z"
     )
     token_id: str = Field(
-        ...,
+        default=...,
         description="Уникальный идентификатор токена",
         example="tok_1MqLW2P4zWv4g4Xs4Z6Xz4W4"
     )
@@ -85,22 +86,22 @@ class AuthRequest(BaseModel):
         device_id (Optional[str]): Идентификатор устройства (опционально)
     """
     email: str = Field(
-        ...,
+        default=...,
         example="user@example.com",
         description="Email пользователя",
         max_length=255
     )
     password: str = Field(
-        ...,
+        default=...,
         min_length=8,
         max_length=64,
         description="Пароль пользователя",
         json_schema_extra={"secure": True}
     )
     device_id: Optional[str] = Field(
-        None,
+        default=...,
         description="Идентификатор устройства для привязки токена",
-        example="device_12345"
+        example="device_12345",
     )
 
 
