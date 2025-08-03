@@ -1,4 +1,5 @@
-# Заглушка для Yookassa (ЮKassa интеграция)
+# Yookassa (ЮKassa интеграция)
+from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
 
@@ -7,9 +8,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from yookassa import Configuration
 from yookassa import Payment as YooPayment
 
+from app.core.monitoring.monitoring import PAYMENT_ERRORS, PAYMENT_STATUS, PAYMENT_AMOUNTS
+from app.core.order_status import OrderStatus
+from app.services.yookassa_adapter import YooKassaAdapter, PaymentError
 from backend.app.core.config import settings
+from backend.app.core.logger import setup_logger
 from backend.app.repositories.payment import PaymentRepository
 from backend.app.schemas.payment import PaymentResponse
+
+logger = setup_logger(__name__)
 
 
 class PaymentService:
@@ -23,15 +30,10 @@ class PaymentService:
 
     def __init__(self, repository: PaymentRepository):
         self.repository = repository
-        Configuration.configure(settings.YOOKASSA_SHOP_ID, settings.YOOKASSA_SECRET_KEY)
-
-    @staticmethod
-    def configure():
-        YooPayment.configure(settings.YOOKASSA_SHOP_ID, settings.YOOKASSA_SECRET_KEY)
-
-    async def handle_webhook(self, notification: dict):
-        if not self.verify_signature(notification):
-            raise HTTPException(status_code=401)
+        self.yookassa = YooKassaAdapter(
+            shop_id=settings.YOOKASSA_SHOP_ID,
+            secret_key=settings.YOOKASSA_SECRET_KEY
+        )
 
     async def create_payment(
             self,
@@ -39,24 +41,99 @@ class PaymentService:
             order_id: UUID,
             amount: float,
             description: str = ""
-    ) -> Optional[PaymentResponse]:
-        payment = YooPayment.create({
-            "amount": {"value": amount, "currency": "RUB"},
-            "confirmation": {"type": "redirect", "return_url": settings.YOOKASSA_RETURN_URL},
-            "metadata": {"order_id": str(order_id), "description": description}
-        })
+    ) -> PaymentResponse:
+        """Создание платежа с полной валидацией"""
+        if amount <= 0:
+            raise HTTPException(400, "Amount must be positive")
+        if amount > 1_000_000:  # Лимит 1 млн руб
+            raise HTTPException(400, "Amount exceeds maximum limit")
 
-        db_payment = await self.repository.create(
-            session,
-            {
-                "order_id": order_id,
-                "external_id": payment.id,
-                "amount": amount,
-                "status": payment.status,
-                "description": description
-            }
-        )
-        return PaymentResponse.model_validate(db_payment)
+        PAYMENT_AMOUNTS.observe(amount)  # Метрика
+
+        try:
+            payment = await self.yookassa.create_payment(
+                amount=amount,
+                order_id=str(order_id),
+                description=description,
+                return_url=settings.YOOKASSA_RETURN_URL
+            )
+
+            db_payment = await self.repository.create(
+                session,
+                {
+                    "order_id": order_id,
+                    "external_id": payment.id,
+                    "amount": float(payment.amount.value),
+                    "status": payment.status,
+                    "description": description
+                }
+            )
+
+            logger.info(f"Created payment {payment.id} for order {order_id}")
+            return PaymentResponse.model_validate(db_payment)
+
+        except PaymentError as e:
+            logger.error(f"Payment creation failed: {str(e)}")
+            raise HTTPException(500, "Payment processing failed")
+
+    async def find_payment(self, payment_id: str) -> Optional[dict]:
+        """Поиск платежа в ЮKassa"""
+        try:
+            return await self.yookassa.get_payment(payment_id)
+        except Exception as e:
+            PAYMENT_ERRORS.labels(error_type="lookup_error").inc()
+            logger.error(f"Payment lookup failed: {str(e)}")
+            return None
+
+    async def process_webhook(
+            self,
+            session: AsyncSession,
+            payload: dict,
+            ipn_signature: str
+    ) -> bool:
+        """Обработка вебхука с проверкой подписи"""
+        payment_data = self.yookassa.parse_webhook(payload, ipn_signature)
+        if not payment_data:
+            raise HTTPException(401, "Invalid signature")
+
+        if payload.get('event') == 'payment.succeeded':
+            await self._process_successful_payment(session, payment_data)
+            return True
+
+        logger.info(f"Received webhook: {payload.get('event')}")
+        return False
+
+    async def _process_successful_payment(
+            self,
+            session: AsyncSession,
+            payment: dict
+    ) -> None:
+        """Обработка успешного платежа"""
+        try:
+            await self.repository.update_by_external_id(
+                session,
+                payment.id,
+                {
+                    "status": payment.status,
+                    "captured_at": datetime.now()
+                }
+            )
+            logger.info(f"Payment {payment.id} processed successfully")
+        except Exception as e:
+            logger.error(f"Failed to process payment: {str(e)}")
+            raise
+
+    async def confirm_payment(self, payment_id: UUID):
+        payment = await self.repository.get(payment_id)
+        if not payment:
+            raise HTTPException(404, "Payment not found")
+
+        try:
+            OrderStatus.validate_transition(payment.order.status, OrderStatus.PAID)
+            await self._process_payment(payment_id)
+        except ValueError as e:
+            await self._cancel_payment(payment_id)
+            raise HTTPException(400, str(e))
 
     async def check_payment_status(
             self,
@@ -91,22 +168,26 @@ class PaymentService:
             HTTPException: Если платеж не найден или уже завершен
         """
         # Получаем платеж из БД
+        """Отмена платежа с проверкой статуса"""
         payment = await self.repository.get(payment_id)
         if not payment:
-            raise HTTPException(status_code=404, detail="Payment not found")
+            raise HTTPException(404, "Payment not found")
 
-        if payment.status in ["succeeded", "canceled"]:
+        if payment.status not in ["pending", "waiting_for_capture"]:
             return False
 
-        # Отменяем платеж в ЮKassa
-        yoo_payment = YooPayment.cancel(payment.external_id)
-
-        # Обновляем статус в БД
-        await self.repository.update(
-            payment_id,
-            {"status": yoo_payment.status}
-        )
-        return True
+        try:
+            yoo_payment = await self.yookassa.cancel_payment(payment.external_id)
+            await self.repository.update(
+                payment_id,
+                {"status": yoo_payment.status}
+            )
+            PAYMENT_STATUS.labels(status="cancelled").inc()
+            return True
+        except PaymentError as e:
+            PAYMENT_ERRORS.labels(error_type="cancel_error").inc()
+            logger.error(f"Payment cancellation failed: {str(e)}")
+            raise HTTPException(500, "Cancellation failed")
 
     async def get_payment_history(
             self,
@@ -125,10 +206,123 @@ class PaymentService:
         payments = await self.repository.get_by_user(user_id, limit=limit)
         return [PaymentResponse.model_validate(p) for p in payments]
 
+    async def refund_payment(self, payment_id: UUID) -> bool:
+        """Оформление возврата платежа через ЮKassa.
+
+        Args:
+            payment_id: UUID платежа в нашей системе
+
+        Returns:
+            bool: True если возврат успешно инициирован
+
+        Raises:
+            HTTPException: Если платеж не найден или возврат невозможен
+        """
+        payment = await self.repository.get(payment_id)
+        if not payment:
+            raise HTTPException(404, "Payment not found")
+
+        if payment.status != "succeeded":
+            raise HTTPException(400, "Only succeeded payments can be refunded")
+
+        try:
+            refund = YooPayment.refund.create({
+                "payment_id": payment.external_id,
+                "amount": {"value": payment.amount, "currency": "RUB"}
+            })
+
+            await self.repository.update(
+                payment_id,
+                {
+                    "status": "refunded",
+                    "refunded_at": datetime.now(),
+                    "refund_id": refund.id
+                }
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Refund failed: {str(e)}")
+            raise HTTPException(500, "Refund processing failed")
+
     @staticmethod
     def verify_signature(notification: dict) -> bool:
-        # Implement your signature verification logic
-        return True
+        """Проверка подписи уведомления от ЮKassa.
 
-    async def refund_payment(self, id):
-        pass
+        Args:
+            notification: Данные уведомления
+
+        Returns:
+            bool: True если подпись валидна
+        """
+        try:
+            # Получаем подпись из заголовков
+            signature = notification.get("signature", "")
+
+            # Формируем строку для проверки
+            data = f"{notification['id']}&{notification['event']}&{notification['object']['id']}"
+
+            # Проверяем подпись
+            return Configuration.verify_signature(data, signature)
+        except Exception as e:
+            logger.error(f"Signature verification failed: {str(e)}")
+            return False
+
+    @staticmethod
+    def _verify_signature(payload: dict, signature: str) -> bool:
+        """Проверка подписи уведомления"""
+        try:
+            # Для Python 3.7+ можно использовать Configuration из SDK
+            from yookassa.configuration import Configuration
+            return Configuration.verify_signature(
+                payload,
+                signature
+            )
+        except Exception as e:
+            logger.error(f"Signature verification failed: {str(e)}")
+            return False
+
+    async def _process_payment(self, payment_id: UUID) -> None:
+        """Обработка успешного платежа и подтверждение заказа"""
+        payment = await self.repository.get_by_id(payment_id)
+        if not payment:
+            raise HTTPException(404, "Payment not found")
+
+        try:
+            # Подтверждаем платеж в ЮKassa
+            yoo_payment = YooPayment.capture(payment.external_id)
+
+            # Обновляем статус платежа в БД
+            await self.repository.update(
+                payment_id,
+                {
+                    "status": yoo_payment.status,
+                    "captured_at": datetime.now()
+                }
+            )
+            logger.info(f"Payment {payment_id} processed successfully")
+        except Exception as e:
+            logger.error(f"Payment processing failed: {str(e)}")
+            raise HTTPException(500, "Payment processing failed")
+
+    async def _cancel_payment(self, payment_id: UUID) -> None:
+        """Отмена платежа с полным возвратом"""
+        payment = await self.repository.get_by_id(payment_id)
+        if not payment:
+            raise HTTPException(404, "Payment not found")
+
+        try:
+            # Отменяем платеж в ЮKassa
+            yoo_payment = YooPayment.cancel(payment.external_id)
+
+            # Обновляем статус в БД
+            await self.repository.update(
+                payment_id,
+                {
+                    "status": yoo_payment.status,
+                    "cancelled_at": datetime.now()
+                }
+            )
+            logger.info(f"Payment {payment_id} cancelled successfully")
+        except Exception as e:
+            logger.error(f"Payment cancellation failed: {str(e)}")
+            raise HTTPException(500, "Payment cancellation failed")

@@ -8,8 +8,9 @@
 - Subscription - модель подписок
 - User - модель пользователей
 """
+from .factory import Factory
 from .generation import Generation as GenerationTask
-from .marketplace import MarketItem, Factory
+from .marketplace import MarketItem
 from .order import Order
 from .subscription import Subscription
 from .user import User

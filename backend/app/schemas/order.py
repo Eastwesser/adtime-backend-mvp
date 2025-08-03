@@ -119,11 +119,12 @@ class OrderResponse(OrderBase):
         example="a1b2c3d4-5678-9012-3456-789012345678",
         description="Уникальный идентификатор заказа",
     )
-    status: OrderStatus = Field(
-        ...,
-        example=OrderStatus.CREATED,
-        description="Текущий статус заказа",
-    )
+    # status: OrderStatus = Field(
+    #     ...,
+    #     example=OrderStatus.CREATED,
+    #     description="Текущий статус заказа",
+    # )
+    status: OrderStatus  # Используем напрямую
     amount: float = Field(
         ...,
         example=1500.0,

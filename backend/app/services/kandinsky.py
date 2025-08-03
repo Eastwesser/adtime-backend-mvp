@@ -1,13 +1,17 @@
 import asyncio
 import base64
-import logging
+from asyncio import Timeout
 from contextlib import asynccontextmanager
+from functools import lru_cache
 from typing import Optional
 
 import httpx
+from httpx import AsyncClient, Limits, AsyncHTTPTransport
 from pydantic import BaseModel
 
-logger = logging.getLogger(__name__)
+from backend.app.core.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 
 class GenerationRequest(BaseModel):
@@ -45,8 +49,13 @@ class KandinskyAPI:
             'X-Secret': f'Secret {secret_key}',
         }
         self.timeout = httpx.Timeout(30.0)  # Таймаут запросов 30 секунд
-        self.client = httpx.AsyncClient()  # Асинхронный HTTP-клиент
+        self.client = AsyncClient(
+            timeout=Timeout(30.0),
+            limits=Limits(max_connections=100, max_keepalive_connections=20),
+            transport=AsyncHTTPTransport(retries=3)  # Добавляем автоматические ретраи
+        )  # Асинхронный HTTP-клиент
 
+    @lru_cache(maxsize=1)
     async def get_pipeline_id(self) -> Optional[str]:
         """Получение ID активного пайплайна для генерации.
 
@@ -176,5 +185,33 @@ class KandinskyAPI:
         finally:
             await self.close()
 
-    async def cancel_generation(self, external_task_id):
-        pass
+    async def cancel_generation(self, external_task_id: str) -> bool:
+        """Отмена задачи генерации в Kandinsky API.
+
+        Args:
+            external_task_id: ID задачи в Kandinsky API
+
+        Returns:
+            bool: True если отмена успешна, False если задача уже завершена
+
+        Raises:
+            httpx.HTTPError: При ошибках HTTP-запроса
+        """
+        try:
+            response = await self.client.post(
+                f"{self.base_url}key/api/v1/pipeline/cancel/{external_task_id}",
+                headers=self.headers,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            return response.json().get("success", False)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                logger.warning(f"Generation task {external_task_id} not found")
+                return False
+            logger.error(f"Error cancelling generation: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error cancelling generation: {str(e)}")
+            raise
+

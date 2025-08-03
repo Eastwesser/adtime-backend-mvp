@@ -9,6 +9,28 @@ from .base import BaseRepository
 
 
 class SubscriptionRepository(BaseRepository[Subscription]):
+    """
+    Репозиторий для работы с подписками пользователей.
+
+    Основная функциональность:
+    - Управление подписками (free, pro, premium)
+    - Контроль квот генераций
+    - Проверка и обновление статусов подписок
+
+    Тарифные планы:
+    - free: 5 генераций
+    - pro: 50 генераций
+    - premium: 200 генераций
+
+    Особенности:
+    - Автоматическое уменьшение квоты при генерации
+    - Возврат квоты при отмене генерации
+    - Проверка срока действия подписки (expires_at)
+
+    Используется в:
+    - GenerationService для контроля квот
+    - SubscriptionService для управления подписками
+    """
     def __init__(self, session: AsyncSession):
         super().__init__(Subscription, session)
 

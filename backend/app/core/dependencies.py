@@ -6,23 +6,25 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
-from app.core.websocket_manager import ws_manager, ConnectionManager
-from app.repositories.factory import FactoryRepository
-from app.repositories.generation import GenerationRepository
-from app.repositories.marketplace import MarketplaceRepository
-from app.repositories.order import OrderRepository
-from app.repositories.payment import PaymentRepository
-from app.repositories.subscription import SubscriptionRepository
-from app.repositories.user import UserRepository
-from app.schemas.user import UserResponse
-from app.services.auth import AuthService
-from app.services.generation import GenerationService
-from app.services.kandinsky import KandinskyAPI
-from app.services.marketplace import MarketplaceService
-from app.services.order import OrderService
-from app.services.payment import PaymentService
-from app.services.subscription import SubscriptionService
+from backend.app.core.config import settings
+from backend.app.core.websocket_manager import ws_manager, ConnectionManager
+from backend.app.repositories.factory import FactoryRepository
+from backend.app.repositories.generation import GenerationRepository
+from backend.app.repositories.marketplace import MarketplaceRepository
+from backend.app.repositories.notification import NotificationRepository
+from backend.app.repositories.order import OrderRepository
+from backend.app.repositories.payment import PaymentRepository
+from backend.app.repositories.subscription import SubscriptionRepository
+from backend.app.repositories.user import UserRepository
+from backend.app.schemas.user import UserResponse
+from backend.app.services.auth import AuthService
+from backend.app.services.generation import GenerationService
+from backend.app.services.kandinsky import KandinskyAPI
+from backend.app.services.marketplace import MarketplaceService
+from backend.app.services.notifications import NotificationService
+from backend.app.services.order import OrderService
+from backend.app.services.payment import PaymentService
+from backend.app.services.subscription import SubscriptionService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
@@ -64,14 +66,6 @@ async def get_current_user(
 
 
 CurrentUserDep = Annotated[UserResponse, Depends(get_current_user)]
-
-
-async def get_marketplace_service(
-        session: AsyncSession = Depends(get_db)
-) -> MarketplaceService:
-    marketplace_repo = MarketplaceRepository(session)
-    user_repo = UserRepository(session)
-    return MarketplaceService(marketplace_repo, user_repo)
 
 
 async def get_factory_service(
@@ -147,6 +141,25 @@ async def get_admin_user(user: UserResponse = Depends(get_current_user)):
     return user
 
 
+async def get_notification_service(
+        session: AsyncSession = Depends(get_db)
+) -> NotificationService:
+    notification_repo = NotificationRepository(session)
+    return NotificationService(notification_repo)
+
+
+async def get_marketplace_service(
+        session: AsyncSession = Depends(get_db)
+) -> MarketplaceService:
+    marketplace_repo = MarketplaceRepository(
+        session,
+        await get_payment_service(session),
+        await get_notification_service(session)
+    )
+    user_repo = UserRepository(session)
+    return MarketplaceService(marketplace_repo, user_repo)
+
+
 # Dependency type annotations
 AdminDep = Annotated[UserResponse, Depends(get_admin_user)]
 PaymentServiceDep = Annotated[PaymentService, Depends(get_payment_service)]
@@ -157,3 +170,4 @@ GenerationServiceDep = Annotated[GenerationService, Depends(get_generation_servi
 OrderServiceDep = Annotated[OrderService, Depends(get_order_service)]
 SubscriptionServiceDep = Annotated[SubscriptionService, Depends(get_subscription_service)]
 KandinskyAPIDep = Annotated[KandinskyAPI, Depends(get_kandinsky_api)]
+NotificationServiceDep = Annotated[NotificationService, Depends(get_notification_service)]

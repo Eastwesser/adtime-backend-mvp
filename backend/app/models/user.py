@@ -20,6 +20,7 @@ from backend.app.models.generation import GenerationTask
 
 class User(Base):
     """Модель пользователя системы с ролями и подпиской"""
+    full_name = None
     __tablename__ = "users"
 
     # Основные данные пользователя

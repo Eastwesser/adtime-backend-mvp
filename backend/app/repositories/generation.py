@@ -11,6 +11,27 @@ from ..schemas import GenerationResponse
 
 
 class GenerationRepository(BaseRepository[Generation]):
+    """
+    Репозиторий для работы с генерациями изображений.
+
+    Основная функциональность:
+    - Управление историей генераций пользователя
+    - Проверка квот генераций
+    - Получение генераций по статусу
+
+    Интеграции:
+    - Работает в паре с SubscriptionRepository для контроля квот
+    - Связан с KandinskyAPI через GenerationService
+
+    Особенности:
+    - Поддерживает пагинацию для больших списков генераций
+    - Отдельные методы для работы со статусами (pending, processing, completed)
+    - Валидация квот перед созданием новой генерации
+
+    Используется в:
+    - GenerationService для основного workflow
+    - Admin API для статистики
+    """
     def __init__(self, session: AsyncSession):
         super().__init__(Generation, session)
         self.generation_repo = None

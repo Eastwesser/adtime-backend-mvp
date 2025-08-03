@@ -7,7 +7,7 @@
 from enum import Enum
 from uuid import UUID
 
-from sqlalchemy import String, ForeignKey, JSON, Float, Integer, Enum as SQLEnum
+from sqlalchemy import String, ForeignKey, JSON, Float, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.models import User, Order
@@ -40,20 +40,3 @@ class MarketItem(Base):
     # Связи
     designer: Mapped["User"] = relationship()  # Дизайнер, создавший товар
     orders: Mapped[list["Order"]] = relationship(back_populates="market_item")
-
-
-class Factory(Base):
-    """Модель производственного предприятия"""
-    __tablename__ = "factories"
-
-    # Основные данные фабрики
-    id: Mapped[UUID] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(100))
-    location: Mapped[str] = mapped_column(String(200))
-    specialization: Mapped[str] = mapped_column(String(100))
-    rating: Mapped[float] = mapped_column(Float)
-    contact_email: Mapped[str] = mapped_column(String(100))
-    production_capacity: Mapped[int] = mapped_column(Integer)
-
-    # Связи
-    orders: Mapped[list["Order"]] = relationship(back_populates="factory")

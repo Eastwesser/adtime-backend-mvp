@@ -19,8 +19,8 @@ from backend.app.models.user import User
 
 
 class Generation(Base):
-    def __init__(self, **kw: Any):
-        super().__init__(kw)
+    def __init__(self):
+        super().__init__()
         self.external_task_id = None
 
     """Модель задачи генерации изображения"""
@@ -48,6 +48,7 @@ class Generation(Base):
     )
     result_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    external_task_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
     # Связи
     user: Mapped["User"] = relationship(back_populates="generations")

@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 from typing import Optional, Dict, List
 
-from sqlalchemy import UUID, Enum, ForeignKey, JSON, Float
+from sqlalchemy import UUID, Enum, ForeignKey, JSON, Float, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.models import Factory, MarketItem
@@ -68,15 +68,16 @@ class Order(Base):
         nullable=True
     )
     status: Mapped[str] = mapped_column(
-        Enum(
-            CoreOrderStatus.CREATED.value,
-            CoreOrderStatus.PAID.value,
-            CoreOrderStatus.PRODUCTION.value,
-            CoreOrderStatus.SHIPPED.value,
-            CoreOrderStatus.COMPLETED.value,
-            CoreOrderStatus.CANCELLED.value,
-            name="order_status"
-        ),
+        # Enum(
+        #     CoreOrderStatus.CREATED.value,
+        #     CoreOrderStatus.PAID.value,
+        #     CoreOrderStatus.PRODUCTION.value,
+        #     CoreOrderStatus.SHIPPED.value,
+        #     CoreOrderStatus.COMPLETED.value,
+        #     CoreOrderStatus.CANCELLED.value,
+        #     name="order_status"
+        # ),
+        Enum(*[s.value for s in CoreOrderStatus], name="order_status"),
         default=CoreOrderStatus.CREATED.value,
         doc=f"Статус заказа. Допустимые значения: {list(CoreOrderStatus)}"
     )
@@ -106,7 +107,23 @@ class Order(Base):
     factory: Mapped[Optional["Factory"]] = relationship(back_populates="orders")
     market_item: Mapped[Optional["MarketItem"]] = relationship(back_populates="orders")
     review: Mapped[Optional["Review"]] = relationship(back_populates="order")
+    __table_args__ = (
+        CheckConstraint(
+            "jsonb_typeof(design_specs) = 'object'",
+            name="check_design_specs_is_object"
+        ),
+        CheckConstraint(
+            "design_specs ?& array['size', 'material']",
+            name="check_required_specs_fields"
+        )
+    )
 
 
-class OrderStatus:
-    PRODUCTION = None
+class OrderStatus(str, Enum):
+    """Статусы заказов в системе."""
+    CREATED = "created"
+    PAID = "paid"
+    PRODUCTION = "production"
+    SHIPPED = "shipped"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"

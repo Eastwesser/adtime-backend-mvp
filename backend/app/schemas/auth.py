@@ -24,7 +24,7 @@ class Token(BaseModel):
         description="Тип токена",
         example="bearer"
     )
-    expires_in: Optional[int] = Field(
+    expires_in: Optional[int] = Field(  # ttl in sec
         None,
         description="Время жизни токена в секундах",
         example=3600
