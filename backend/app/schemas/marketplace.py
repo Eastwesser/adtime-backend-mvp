@@ -14,42 +14,42 @@ class ProductType(str, Enum):
 
 class MarketItem(BaseModel):
     id: UUID = Field(
-        default=...,
+        ...,
         example="a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
     )
     title: str = Field(
-        default=...,
+        ...,
         example="Summer Sale Banner",
         max_length=100,
         description="Название товара",
     )
     description: str = Field(
-        default=...,
+        ...,
         example="Vibrant summer-themed banner design",
         max_length=100,
     )
     item_type: ProductType = Field(
-        default=...,
+        ...,
         example="banner",
         enum=ProductType,
     )
     price: float = Field(
-        default=...,
+        ...,
         example=49.99,
         gt=0,
     )
     preview_url: str = Field(
-        default=...,
+        ...,
         example="https://storage.example.com/previews/summer-banner.jpg",
     )
     rating: float = Field(
-        default=...,
+        ...,
         example=4.5,
         ge=0,
         le=5,
     )
     designer_id: UUID = Field(
-        default=...,
+        ...,
         example="b2c3d4e5-f6g7-8901-h2i3-j4k5l6m7n8o9",
     )
 

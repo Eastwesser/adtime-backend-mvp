@@ -11,6 +11,14 @@ logger = logging.getLogger(__name__)
 
 
 class GenerationRequest(BaseModel):
+    """Модель запроса для генерации изображения через Kandinsky API.
+
+    Attributes:
+        prompt: Текст запроса для генерации
+        width: Ширина изображения (по умолчанию 1024)
+        height: Высота изображения (по умолчанию 1024)
+        num_images: Количество генерируемых изображений (по умолчанию 1)
+    """
     prompt: str
     width: int = 1024
     height: int = 1024
@@ -18,16 +26,36 @@ class GenerationRequest(BaseModel):
 
 
 class KandinskyAPI:
+    """Клиент для работы с Kandinsky API (https://fusionbrain.ai/).
+
+    Обеспечивает:
+    - Генерацию изображений по текстовому описанию
+    - Проверку статуса генерации
+    - Управление подключением к API
+
+    Для работы требуется:
+    - API ключ (получается в личном кабинете FusionBrain)
+    - Секретный ключ
+    """
+
     def __init__(self, api_key: str, secret_key: str):
         self.base_url = "https://api-key.fusionbrain.ai/"
         self.headers = {
             'X-Key': f'Key {api_key}',
             'X-Secret': f'Secret {secret_key}',
         }
-        self.timeout = httpx.Timeout(30.0)
-        self.client = httpx.AsyncClient()
+        self.timeout = httpx.Timeout(30.0)  # Таймаут запросов 30 секунд
+        self.client = httpx.AsyncClient()  # Асинхронный HTTP-клиент
 
     async def get_pipeline_id(self) -> Optional[str]:
+        """Получение ID активного пайплайна для генерации.
+
+        Returns:
+            Optional[str]: ID пайплайна или None в случае ошибки
+
+        Note:
+            Kandinsky API требует указания pipeline_id для генерации
+        """
         try:
             response = await self.client.get(
                 f"{self.base_url}key/api/v1/pipelines",
@@ -42,10 +70,22 @@ class KandinskyAPI:
             return None
 
     async def generate_image(self, request: GenerationRequest) -> Optional[str]:
+        """Запуск генерации изображения по текстовому запросу.
+
+        Args:
+            request: Параметры генерации (текст, размеры и т.д.)
+
+        Returns:
+            Optional[str]: UUID задачи генерации или None в случае ошибки
+
+        Raises:
+            httpx.HTTPError: При ошибках HTTP-запроса
+        """
         pipeline_id = await self.get_pipeline_id()
         if not pipeline_id:
             return None
 
+        # Подготовка параметров генерации
         params = {
             "type": "GENERATE",
             "numImages": request.num_images,
@@ -54,6 +94,7 @@ class KandinskyAPI:
             "generateParams": {"query": request.prompt}
         }
 
+        # Формируем multipart/form-data запрос
         files = {
             'pipeline_id': (None, pipeline_id),
             'params': (None, params, 'application/json')
@@ -78,6 +119,19 @@ class KandinskyAPI:
             max_attempts: int = 10,
             delay: float = 3.0
     ) -> Optional[bytes]:
+        """Проверка статуса генерации изображения.
+
+        Args:
+            task_id: UUID задачи генерации
+            max_attempts: Максимальное количество попыток проверки
+            delay: Задержка между попытками (в секундах)
+
+        Returns:
+            Optional[bytes]: Бинарные данные изображения в формате base64 или None
+
+        Note:
+            Использует полинг с экспоненциальным backoff (можно улучшить)
+        """
         attempt = 0
         while attempt < max_attempts:
             try:
@@ -89,6 +143,7 @@ class KandinskyAPI:
                 data = response.json()
 
                 if data['status'] == 'DONE':
+                    # Декодируем base64 в бинарные данные
                     return base64.b64decode(data['result']['files'][0])
                 elif data['status'] == 'FAIL':
                     logger.error(f"Generation failed: {data.get('errorDescription')}")
@@ -105,15 +160,21 @@ class KandinskyAPI:
         return None
 
     async def close(self):
+        """Корректное закрытие HTTP-клиента."""
         await self.client.aclose()
 
     @asynccontextmanager
     async def context(self):
+        """Контекстный менеджер для автоматического управления подключением.
+
+        Usage:
+            async with KandinskyAPI(api_key, secret_key).context() as api:
+                await api.generate_image(...)
+        """
         try:
             yield self
         finally:
             await self.close()
 
-# # Usage example:
-# async with KandinskyAPI(api_key, secret_key).context() as api:
-#     await api.generate_image(...)
+    async def cancel_generation(self, external_task_id):
+        pass

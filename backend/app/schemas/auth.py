@@ -14,12 +14,12 @@ class Token(BaseModel):
         token_type (str): Тип токена (по умолчанию 'bearer')
         expires_in (Optional[int]): Время жизни токена в секундах (опционально)
     """
-    access_token: str = Field(
+    access_token: str = Field(  # type: ignore
         ...,
         description="JWT токен для аутентификации",
         example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     )
-    token_type: str = Field(
+    token_type: str = Field(  # type: ignore
         ...,
         description="Тип токена",
         example="bearer"

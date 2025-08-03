@@ -13,6 +13,13 @@ from backend.app.schemas.marketplace import MarketItem, MarketFilters
 
 
 class MarketplaceService:
+    """
+    Сервис для работы с маркетплейсом дизайнов.
+    Включает:
+    - Поиск и фильтрацию товаров
+    - Работу с корзиной
+    - Создание заказов из товаров
+    """
     def __init__(self, repo: MarketplaceRepository, user_repo: UserRepository):
         self.repo = repo
         self.user_repo = user_repo
@@ -49,3 +56,51 @@ class MarketplaceService:
             amount=item.price,
             specs=item.specs
         )
+
+    async def get_item_details(self, item_id: UUID) -> MarketItem:
+        """Получение полной информации о товаре включая отзывы и рейтинг
+
+        Args:
+            item_id: UUID товара
+
+        Returns:
+            MarketItem: Полная информация о товаре
+
+        Raises:
+            HTTPException: Если товар не найден
+        """
+        item = await self.repo.get_item_with_details(item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Item not found")
+
+        # Получаем отзывы
+        reviews = await self.repo.get_item_reviews(item_id)
+
+        # Рассчитываем средний рейтинг
+        avg_rating = sum(r.rating for r in reviews) / len(reviews) if reviews else 0
+
+        return MarketItem(
+            **item.dict(),
+            reviews=reviews,
+            average_rating=round(avg_rating, 1),
+            review_count=len(reviews)
+        )
+
+    async def remove_from_cart(self, user_id: UUID, item_id: UUID) -> None:
+        """Удаление товара из корзины пользователя
+
+        Args:
+            user_id: UUID пользователя
+            item_id: UUID товара
+
+        Raises:
+            HTTPException: Если товар не найден в корзине
+        """
+        cart_item = await self.repo.get_cart_item(user_id, item_id)
+        if not cart_item:
+            raise HTTPException(
+                status_code=404,
+                detail="Item not found in cart"
+            )
+
+        await self.repo.remove_from_cart(user_id, item_id)

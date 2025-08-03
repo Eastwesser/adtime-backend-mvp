@@ -106,3 +106,7 @@ class Order(Base):
     factory: Mapped[Optional["Factory"]] = relationship(back_populates="orders")
     market_item: Mapped[Optional["MarketItem"]] = relationship(back_populates="orders")
     review: Mapped[Optional["Review"]] = relationship(back_populates="order")
+
+
+class OrderStatus:
+    PRODUCTION = None

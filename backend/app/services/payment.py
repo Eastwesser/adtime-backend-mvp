@@ -1,5 +1,5 @@
 # Заглушка для Yookassa (ЮKassa интеграция)
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -13,6 +13,14 @@ from backend.app.schemas.payment import PaymentResponse
 
 
 class PaymentService:
+    """
+    Сервис для работы с платежами через ЮKassa.
+    Функционал:
+    - Создание платежей
+    - Обработка вебхуков
+    - Проверка статусов
+    """
+
     def __init__(self, repository: PaymentRepository):
         self.repository = repository
         Configuration.configure(settings.YOOKASSA_SHOP_ID, settings.YOOKASSA_SECRET_KEY)
@@ -70,7 +78,57 @@ class PaymentService:
         # Add webhook processing logic here
         return {"status": "processed"}
 
+    async def cancel_payment(self, payment_id: UUID) -> bool:
+        """Отмена платежа в ЮKassa
+
+        Args:
+            payment_id: UUID платежа в нашей системе
+
+        Returns:
+            bool: True если отмена успешна
+
+        Raises:
+            HTTPException: Если платеж не найден или уже завершен
+        """
+        # Получаем платеж из БД
+        payment = await self.repository.get(payment_id)
+        if not payment:
+            raise HTTPException(status_code=404, detail="Payment not found")
+
+        if payment.status in ["succeeded", "canceled"]:
+            return False
+
+        # Отменяем платеж в ЮKassa
+        yoo_payment = YooPayment.cancel(payment.external_id)
+
+        # Обновляем статус в БД
+        await self.repository.update(
+            payment_id,
+            {"status": yoo_payment.status}
+        )
+        return True
+
+    async def get_payment_history(
+            self,
+            user_id: UUID,
+            limit: int = 100
+    ) -> List[PaymentResponse]:
+        """Получение истории платежей пользователя
+
+        Args:
+            user_id: UUID пользователя
+            limit: Максимальное количество записей
+
+        Returns:
+            List[PaymentResponse]: Список платежей пользователя
+        """
+        payments = await self.repository.get_by_user(user_id, limit=limit)
+        return [PaymentResponse.model_validate(p) for p in payments]
+
     @staticmethod
     def verify_signature(notification: dict) -> bool:
         # Implement your signature verification logic
         return True
+
+    async def refund_payment(self, id):
+        pass

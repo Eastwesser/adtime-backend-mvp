@@ -17,8 +17,9 @@ class OrderRepository(BaseRepository[Order]):
     def __init__(self, session: AsyncSession):
         super().__init__(Order, session)
 
+    @classmethod
     async def get_by_user(
-            self,
+            cls,
             session: AsyncSession,
             user_id: UUID,
             skip: int = 0,
@@ -32,6 +33,7 @@ class OrderRepository(BaseRepository[Order]):
         )
         return result.scalars().all()
 
+    @staticmethod
     async def get_by_status(
             self,
             session: AsyncSession,
@@ -59,5 +61,8 @@ class OrderRepository(BaseRepository[Order]):
 
     async def exists(self, order_id: UUID) -> bool:
         result = await self.session.execute(
-            select(exists().where(Order.id == order_id))
+            select(exists().where(Order.id == order_id)))
         return result.scalar()
+
+    async def get_by_factory(self, factory_id, status):
+        pass

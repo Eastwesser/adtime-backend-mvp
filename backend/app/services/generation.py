@@ -1,5 +1,6 @@
 # Работа с Kandinsky API
 import uuid
+from datetime import datetime
 from typing import List, Optional
 
 from fastapi import HTTPException
@@ -11,6 +12,14 @@ from backend.app.services.kandinsky import KandinskyAPI, GenerationRequest
 
 
 class GenerationService:
+    """
+    Сервис для работы с генерацией изображений через Kandinsky API.
+    Основные функции:
+    - Управление квотами генераций
+    - Запуск и отслеживание задач генерации
+    - Хранение результатов
+    """
+
     def __init__(
             self,
             generation_repo: GenerationRepository,
@@ -87,7 +96,7 @@ class GenerationService:
         if image_data:
             updates.update({
                 "status": "completed",
-                "result_url": self._store_image(generation_id, image_data)
+                "result_url": self._store_image(generation_id)
             })
         else:
             updates["status"] = "failed"
@@ -95,7 +104,8 @@ class GenerationService:
         updated_gen = await self.generation_repo.update(generation_id, updates)
         return GenerationResponse.model_validate(updated_gen)
 
-    def _store_image(self, generation_id: uuid.UUID, image_data: bytes) -> str:
+    @staticmethod
+    def _store_image(generation_id: uuid.UUID) -> str:
         # Здесь реализация сохранения изображения (S3, локальное хранилище и т.д.)
         # Возвращаем URL до изображения
         return f"https://storage.example.com/generations/{generation_id}.jpg"
@@ -106,4 +116,60 @@ class GenerationService:
             limit: int = 100
     ) -> List[GenerationResponse]:
         generations = await self.generation_repo.get_by_user(user_id, limit=limit)
+        return [GenerationResponse.model_validate(g) for g in generations]
+
+    async def cancel_generation(self, generation_id: uuid.UUID) -> bool:
+        """Отмена запущенной генерации
+
+        Args:
+            generation_id: UUID задачи генерации
+
+        Returns:
+            bool: True если отмена успешна, False если задача уже завершена
+
+        Raises:
+            HTTPException: Если генерация не найдена или нет прав на отмену
+        """
+        generation = await self.generation_repo.get(generation_id)
+        if not generation:
+            raise HTTPException(status_code=404, detail="Generation not found")
+
+        if generation.status not in ["pending", "processing"]:
+            return False
+
+        # Отменяем задачу в Kandinsky API
+        if generation.external_task_id:
+            await self.kandinsky_api.cancel_generation(generation.external_task_id)
+
+        # Обновляем статус в БД
+        await self.generation_repo.update(
+            generation_id,
+            {"status": "cancelled", "cancelled_at": datetime.now()}
+        )
+
+        # Возвращаем квоту пользователю
+        await self.subscription_repo.increment_quota(generation.user_id)
+        return True
+
+    async def get_generation_history(
+            self,
+            user_id: uuid.UUID,
+            limit: int = 100,
+            offset: int = 0
+    ) -> List[GenerationResponse]:
+        """Получение истории генераций с пагинацией
+
+        Args:
+            user_id: UUID пользователя
+            limit: Количество записей на странице
+            offset: Смещение для пагинации
+
+        Returns:
+            List[GenerationResponse]: Список генераций пользователя
+        """
+        generations = await self.generation_repo.get_by_user_paginated(
+            user_id,
+            limit=limit,
+            offset=offset
+        )
         return [GenerationResponse.model_validate(g) for g in generations]

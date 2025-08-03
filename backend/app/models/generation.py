@@ -19,6 +19,10 @@ from backend.app.models.user import User
 
 
 class Generation(Base):
+    def __init__(self, **kw: Any):
+        super().__init__(kw)
+        self.external_task_id = None
+
     """Модель задачи генерации изображения"""
     __tablename__ = "generations"
 

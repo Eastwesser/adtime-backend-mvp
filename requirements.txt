@@ -2,6 +2,7 @@ alembic==1.16.4
 annotated-types==0.7.0
 anyio==4.9.0
 asyncpg==0.30.0
+-e git+https://github.com/Eastwesser/adtime-backend-mvp.git@8ec60359483c9fa896d9c56731014019df4da4c0#egg=backend&subdirectory=backend
 black==25.1.0
 boto3==1.39.17
 botocore==1.39.17
@@ -12,8 +13,9 @@ cffi==1.17.1
 charset-normalizer==3.4.2
 cleo==2.1.0
 click==8.2.1
+colorama==0.4.6
 crashtest==0.4.1
-cryptography==40.0.1
+cryptography==40.0.2
 Deprecated==1.2.18
 distlib==0.4.0
 distro==1.9.0
@@ -40,6 +42,7 @@ jaraco.context==6.0.1
 jaraco.functools==4.2.1
 jeepney==0.9.0
 jmespath==1.0.1
+jose==1.0.0
 keyring==25.6.0
 Mako==1.3.10
 MarkupSafe==3.0.2
@@ -58,6 +61,7 @@ pluggy==1.6.0
 poetry==2.1.3
 poetry-core==2.1.3
 poetry-plugin-export==1.9.0
+prometheus_client==0.22.1
 psycopg2-binary==2.9.10
 pyasn1==0.6.1
 pycparser==2.22
@@ -71,6 +75,8 @@ pytest-asyncio==0.23.8
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.1
 python-jose==3.5.0
+python-multipart==0.0.20
+pywin32-ctypes==0.2.3
 RapidFuzz==3.13.0
 requests==2.32.4
 requests-toolbelt==1.0.0
@@ -84,6 +90,8 @@ SQLAlchemy==2.0.42
 starlette==0.47.2
 tomlkit==0.13.3
 trove-classifiers==2025.5.9.12
+types-pyasn1==0.6.0.20250516
+types-python-jose==3.5.0.20250531
 typing-inspection==0.4.1
 typing_extensions==4.14.1
 tzdata==2025.2
@@ -93,5 +101,3 @@ virtualenv==20.32.0
 wrapt==1.17.2
 yookassa==2.5.0
 zstandard==0.23.0
-python-multipart==0.0.6
-prometheus-client==0.22.1
