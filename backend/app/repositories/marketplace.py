@@ -53,7 +53,7 @@ class MarketplaceRepository(BaseRepository[MarketItem]):
             payment_service: PaymentService,
             notification_service: NotificationService,
     ):
-        super().__init__(MarketItem, session)
+        super().__init__(MarketItem, session)  # Передаем session в родительский класс
         self.payment_service = payment_service
         self.notification_service = notification_service
 

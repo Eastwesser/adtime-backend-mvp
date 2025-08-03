@@ -167,7 +167,7 @@ class GenerationService:
     async def cancel_generation(
             self,
             generation_id: uuid.UUID,
-            user_id: UUID,
+            user_id: uuid.UUID,
             api_client: KandinskyAPI
     ) -> bool:
         """Отмена запущенной генерации
@@ -238,8 +238,31 @@ class GenerationService:
         )
         return [GenerationResponse.model_validate(g) for g in generations]
 
-    async def _mark_as_failed(self, id):
-        pass
+    async def _mark_as_failed(self, generation_id: uuid.UUID) -> None:
+        """Помечает генерацию как неудачную в базе данных.
+
+        Args:
+            generation_id: UUID задачи генерации
+
+        Side effects:
+            - Обновляет статус генерации на 'failed'
+            - Устанавливает дату и время ошибки
+            - Логирует ошибку
+        """
+        try:
+            await self.generation_repo.update(
+                generation_id,
+                {
+                    "status": "failed",
+                    "failed_at": datetime.now()
+                }
+            )
+            logger.error(f"Generation {generation_id} marked as failed")
+        except Exception as e:
+            logger.critical(
+                f"Failed to mark generation {generation_id} as failed: {str(e)}"
+            )
+            raise
 
     async def _mark_as_failed(self, generation_id: uuid.UUID):
         """Marks generation as failed in DB"""

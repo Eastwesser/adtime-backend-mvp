@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import async_session
 from backend.app.core.config import settings
 from backend.app.core.rate_limiter import RateLimiter
 from backend.app.core.redis import redis_client
@@ -31,11 +32,32 @@ from backend.app.services.subscription import SubscriptionService
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
-def get_db():
-    return None
+async def get_db() -> AsyncSession:
+    """Генератор сессий базы данных для Dependency Injection.
+
+    Yields:
+        AsyncSession: Асинхронная сессия SQLAlchemy
+
+    Ensures:
+        Сессия будет закрыта после использования
+    """
+    async with async_session() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
 
 def get_ws_manager() -> ConnectionManager:
+    """Возвращает глобальный менеджер WebSocket соединений.
+
+    Returns:
+        ConnectionManager: Экземпляр менеджера соединений
+    """
     return ws_manager
 
 
@@ -162,8 +184,9 @@ async def get_marketplace_service(
     return MarketplaceService(marketplace_repo, user_repo)
 
 
-async def get_rate_limiter():
+async def get_rate_limiter() -> RateLimiter:
     return RateLimiter(redis_client, "100/minute")
+
 
 
 # Dependency type annotations
@@ -177,7 +200,14 @@ OrderServiceDep = Annotated[OrderService, Depends(get_order_service)]
 SubscriptionServiceDep = Annotated[SubscriptionService, Depends(get_subscription_service)]
 KandinskyAPIDep = Annotated[KandinskyAPI, Depends(get_kandinsky_api)]
 NotificationServiceDep = Annotated[NotificationService, Depends(get_notification_service)]
+RateLimiterDep = Annotated[RateLimiter, Depends(get_rate_limiter)]
 
 
-def get_user_service():
-    return None
+class UserService:
+    pass
+
+
+async def get_user_service(session: AsyncSession = Depends(get_db)) -> UserService:
+    user_repo = UserRepository(session)
+    return UserService(user_repo)
+

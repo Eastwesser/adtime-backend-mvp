@@ -77,3 +77,4 @@ class RateLimiter:
         except Exception as e:
             logger.error(f"Rate limiter error: {e}")
             return True  # Fail open
+

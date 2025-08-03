@@ -89,5 +89,33 @@ class UserResponse(UserBase):
         }
 
 
-class UserUpdate:
-    pass
+class UserUpdate(BaseModel):
+    """Модель для обновления данных пользователя.
+
+    Все поля опциональны - обновляются только переданные значения.
+    """
+    email: Optional[EmailStr] = Field(
+        None,
+        description="Новый email",
+        example="new.email@example.com"
+    )
+    password: Optional[str] = Field(
+        None,
+        min_length=8,
+        max_length=50,
+        description="Новый пароль",
+        json_schema_extra={"secure": True}
+    )
+    telegram_id: Optional[str] = Field(
+        None,
+        description="ID Telegram для привязки",
+        example="987654321"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "email": "updated.email@example.com",
+                "telegram_id": "987654321"
+            }
+        }

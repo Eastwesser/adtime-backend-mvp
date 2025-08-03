@@ -148,5 +148,29 @@ class UserLoginResponse(BaseModel):
         }
 
 
-class RefreshTokenRequest:
-    pass
+class RefreshTokenRequest(BaseModel):
+    """Модель запроса для обновления токена доступа.
+
+    Attributes:
+        refresh_token (str): Токен для обновления доступа
+        device_id (Optional[str]): Идентификатор устройства (для аудита)
+    """
+    refresh_token: str = Field(
+        ...,
+        description="Refresh token для получения нового access token",
+        example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        json_schema_extra={"secure": True}
+    )
+    device_id: Optional[str] = Field(
+        None,
+        description="Идентификатор устройства, с которого выполняется запрос",
+        example="device_12345"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "device_id": "user_device_123"
+            }
+        }

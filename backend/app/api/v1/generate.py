@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, field_validator
 from backend.app.core.dependencies import (
     GenerationServiceDep,
     CurrentUserDep,
-    KandinskyAPIDep
+    KandinskyAPIDep, RateLimiterDep
 )
 from backend.app.schemas.generation import (
     GenerationResponse,
@@ -53,10 +53,47 @@ class GenerationCreate(BaseModel):
         return v
 
 
-class RateLimiterDep:
-    async def check_request(self, param):
-        pass
-
+# class RateLimiterDep:
+#     """Зависимость для ограничения частоты запросов.
+#
+#     Использует Redis для хранения счетчиков.
+#     """
+#
+#     def __init__(self, redis_client, rate_limit: str):
+#         self.redis = redis_client
+#         self.limit, self.period = self._parse_rate_limit(rate_limit)
+#
+#     async def check_request(self, user_id: str) -> None:
+#         """Проверяет, не превышен ли лимит запросов.
+#
+#         Raises:
+#             HTTPException: 429 если лимит превышен
+#         """
+#         key = f"rate_limit:{user_id}"
+#         current = await self.redis.incr(key)
+#
+#         if current == 1:
+#             await self.redis.expire(key, self.period)
+#
+#         if current > self.limit:
+#             raise HTTPException(
+#                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+#                 detail=f"Rate limit exceeded: {self.limit} per {self.period}sec"
+#             )
+#
+#     def _parse_rate_limit(self, rate_limit: str) -> tuple[int, int]:
+#         """Парсит строку вида '10/minute' в (limit, period_seconds)."""
+#         try:
+#             limit, period = rate_limit.split("/")
+#             period_seconds = {
+#                 "second": 1,
+#                 "minute": 60,
+#                 "hour": 3600
+#             }[period.lower()]
+#             return int(limit), period_seconds
+#         except Exception as e:
+#             raise ValueError(f"Invalid rate limit format: {rate_limit}") from e
+#
 
 @router.post(
     "",
@@ -155,8 +192,38 @@ async def check_generation_status(
     return generation
 
 
-class GenerationCancelResponse:
-    pass
+class GenerationCancelResponse(BaseModel):
+    """Модель ответа при отмене генерации.
+
+    Attributes:
+        success (bool): Флаг успешности операции
+        generation_id (UUID): ID отмененной генерации
+        refunded (bool): Была ли возвращена квота
+    """
+    success: bool = Field(
+        ...,
+        description="Успешно ли выполнена отмена",
+        example=True
+    )
+    generation_id: UUID = Field(
+        ...,
+        description="ID отмененной генерации",
+        example="a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+    )
+    refunded: bool = Field(
+        ...,
+        description="Была ли возвращена квота",
+        example=True
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "success": True,
+                "generation_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+                "refunded": True
+            }
+        }
 
 
 @router.post(

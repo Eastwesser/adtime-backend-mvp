@@ -26,6 +26,10 @@ cryptography = "^40.0.2"
 pydantic = { extras = ["email"], version = "^2.5.3" }
 python-multipart = "^0.0.20"
 prometheus-client = "^0.22.1"
+redis = "^6.2.0"
+python-jose = "^3.5.0"
+pydantic = { extras = ["email"], version = "^2.11.7" }
+sqlalchemy = { extras = ["asyncio"], version = "^2.0.42" }
 
 
 [tool.poetry.group.dev.dependencies]
@@ -35,6 +39,8 @@ factory-boy = "^3.3.0"
 black = "^25.1.0"
 isort = "^6.0.1"
 mypy = "^1.16.1"
+types-redis = "^6.2.0"
+types-python-jose = "^3.5.0"
 
 [build-system]
 requires = ["poetry-core"]

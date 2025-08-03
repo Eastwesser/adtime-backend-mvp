@@ -30,7 +30,25 @@ class GenerationRequest(BaseModel):
 
 
 class GenerationStatus(str, Literal['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED']):
-    pass
+    """Статусы генерации в Kandinsky API.
+
+    Values:
+        PENDING: Задача в очереди на выполнение
+        PROCESSING: Генерация в процессе
+        COMPLETED: Успешно завершена
+        FAILED: Завершена с ошибкой
+    """
+
+    @classmethod
+    def from_kandinsky(cls, status: str) -> 'GenerationStatus':
+        """Конвертирует статус Kandinsky API в наш enum."""
+        status_map = {
+            'NEW': 'PENDING',
+            'PROCESSING': 'PROCESSING',
+            'DONE': 'COMPLETED',
+            'FAIL': 'FAILED'
+        }
+        return cls(status_map.get(status, 'FAILED'))
 
 
 class KandinskyAPI:
