@@ -3,11 +3,12 @@ import base64
 from asyncio import Timeout
 from contextlib import asynccontextmanager
 from functools import lru_cache
-from typing import Optional
+from typing import Optional, Literal
 
 import httpx
 from httpx import AsyncClient, Limits, AsyncHTTPTransport
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from backend.app.core.logger import setup_logger
 
@@ -23,10 +24,14 @@ class GenerationRequest(BaseModel):
         height: Высота изображения (по умолчанию 1024)
         num_images: Количество генерируемых изображений (по умолчанию 1)
     """
-    prompt: str
-    width: int = 1024
-    height: int = 1024
-    num_images: int = 1
+    prompt: str = Field(..., min_length=3, max_length=1000)
+    width: int = Field(1024, ge=256, le=2048)
+    height: int = Field(1024, ge=256, le=2048)
+    num_images: int = Field(1, ge=1, le=4)
+
+
+class GenerationStatus(str, Literal['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED']):
+    pass
 
 
 class KandinskyAPI:
@@ -55,7 +60,10 @@ class KandinskyAPI:
             transport=AsyncHTTPTransport(retries=3)  # Добавляем автоматические ретраи
         )  # Асинхронный HTTP-клиент
 
-    @lru_cache(maxsize=1)
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10)
+    )
     async def get_pipeline_id(self) -> Optional[str]:
         """Получение ID активного пайплайна для генерации.
 
@@ -78,6 +86,10 @@ class KandinskyAPI:
             logger.error(f"Error getting pipeline: {str(e)}")
             return None
 
+    @retry(
+        stop=stop_after_attempt(2),
+        wait=wait_exponential(multiplier=1, min=1, max=5)
+    )
     async def generate_image(self, request: GenerationRequest) -> Optional[str]:
         """Запуск генерации изображения по текстовому запросу.
 
@@ -113,7 +125,10 @@ class KandinskyAPI:
             response = await self.client.post(
                 f"{self.base_url}key/api/v1/pipeline/run",
                 headers=self.headers,
-                files=files,
+                files={
+                    'pipeline_id': (None, pipeline_id),
+                    'params': (None, params, 'application/json')
+                },
                 timeout=self.timeout
             )
             response.raise_for_status()
@@ -125,15 +140,15 @@ class KandinskyAPI:
     async def check_generation_status(
             self,
             task_id: str,
-            max_attempts: int = 10,
-            delay: float = 3.0
+            max_attempts: int = 20,
+            initial_delay: float = 2.0
     ) -> Optional[bytes]:
         """Проверка статуса генерации изображения.
 
         Args:
             task_id: UUID задачи генерации
             max_attempts: Максимальное количество попыток проверки
-            delay: Задержка между попытками (в секундах)
+            initial_delay: Задержка между попытками (в секундах)
 
         Returns:
             Optional[bytes]: Бинарные данные изображения в формате base64 или None
@@ -142,6 +157,8 @@ class KandinskyAPI:
             Использует полинг с экспоненциальным backoff (можно улучшить)
         """
         attempt = 0
+        delay = initial_delay
+
         while attempt < max_attempts:
             try:
                 response = await self.client.get(
@@ -152,7 +169,6 @@ class KandinskyAPI:
                 data = response.json()
 
                 if data['status'] == 'DONE':
-                    # Декодируем base64 в бинарные данные
                     return base64.b64decode(data['result']['files'][0])
                 elif data['status'] == 'FAIL':
                     logger.error(f"Generation failed: {data.get('errorDescription')}")
@@ -160,12 +176,15 @@ class KandinskyAPI:
 
                 attempt += 1
                 await asyncio.sleep(delay)
+                delay = min(delay * 1.5, 10.0)  # Exponential backoff with max 10s
+
             except Exception as e:
-                logger.error(f"Error checking status: {str(e)}")
+                logger.warning(f"Status check attempt {attempt} failed: {str(e)}")
                 attempt += 1
                 await asyncio.sleep(delay)
+                delay = min(delay * 1.5, 10.0)
 
-        logger.error(f"Max attempts reached for task {task_id}")
+        logger.error(f"Max status check attempts reached for task {task_id}")
         return None
 
     async def close(self):
@@ -183,7 +202,13 @@ class KandinskyAPI:
         try:
             yield self
         finally:
-            await self.close()
+            await self.client.aclose()
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            await self.client.aclose()
 
     async def cancel_generation(self, external_task_id: str) -> bool:
         """Отмена задачи генерации в Kandinsky API.
@@ -214,4 +239,3 @@ class KandinskyAPI:
         except Exception as e:
             logger.error(f"Unexpected error cancelling generation: {str(e)}")
             raise
-

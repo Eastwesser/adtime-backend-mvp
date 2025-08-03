@@ -7,6 +7,8 @@ from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.core.config import settings
+from backend.app.core.rate_limiter import RateLimiter
+from backend.app.core.redis import redis_client
 from backend.app.core.websocket_manager import ws_manager, ConnectionManager
 from backend.app.repositories.factory import FactoryRepository
 from backend.app.repositories.generation import GenerationRepository
@@ -160,6 +162,10 @@ async def get_marketplace_service(
     return MarketplaceService(marketplace_repo, user_repo)
 
 
+async def get_rate_limiter():
+    return RateLimiter(redis_client, "100/minute")
+
+
 # Dependency type annotations
 AdminDep = Annotated[UserResponse, Depends(get_admin_user)]
 PaymentServiceDep = Annotated[PaymentService, Depends(get_payment_service)]
@@ -171,3 +177,7 @@ OrderServiceDep = Annotated[OrderService, Depends(get_order_service)]
 SubscriptionServiceDep = Annotated[SubscriptionService, Depends(get_subscription_service)]
 KandinskyAPIDep = Annotated[KandinskyAPI, Depends(get_kandinsky_api)]
 NotificationServiceDep = Annotated[NotificationService, Depends(get_notification_service)]
+
+
+def get_user_service():
+    return None

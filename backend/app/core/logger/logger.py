@@ -13,3 +13,7 @@ def setup_logger(name: str) -> logging.Logger:
 
     logger.addHandler(handler)
     return logger
+
+
+def error(param):
+    return None

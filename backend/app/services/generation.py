@@ -5,9 +5,10 @@ from typing import List, Optional
 
 from fastapi import HTTPException
 
+from app.core.logger import logger
 from backend.app.repositories.generation import GenerationRepository
 from backend.app.repositories.subscription import SubscriptionRepository
-from backend.app.schemas.generation import GenerationCreate, GenerationResponse
+from backend.app.schemas.generation import GenerationCreate, GenerationResponse, GenerationStatusResponse
 from backend.app.services.kandinsky import KandinskyAPI, GenerationRequest
 
 
@@ -39,70 +40,115 @@ class GenerationService:
     async def create_generation(
             self,
             user_id: uuid.UUID,
-            generation_in: GenerationCreate
+            generation_in: GenerationCreate,
+            api_client: KandinskyAPI
     ) -> Optional[GenerationResponse]:
-
-        if not await self.check_quota(user_id):
+        """
+        Creates new generation task with:
+        - Quota validation
+        - Kandinsky API integration
+        - Automatic status tracking
+        """
+        if not await self._check_quota(user_id):
             raise HTTPException(
                 status_code=402,
-                detail="Generation quota exceeded. Please upgrade your subscription."
+                detail="Generation quota exceeded"
             )
 
         # Создаем запись в БД
-        generation_data = {
+        db_generation = await self.generation_repo.create({
             **generation_in.model_dump(),
             "user_id": user_id,
             "status": "pending"
-        }
-        db_generation = await self.generation_repo.create(generation_data)
+        })
 
         # Запускаем генерацию
-        request = GenerationRequest(
-            prompt=generation_in.prompt,
-            model_version=generation_in.model_version
-        )
-        task_id = await self.kandinsky_api.generate_image(request)
+        try:
+            request = GenerationRequest(
+                prompt=generation_in.prompt,
+                width=generation_in.width,
+                height=generation_in.height
+            )
+            task_id = await api_client.generate_image(request)
 
-        if not task_id:
-            await self.generation_repo.update(db_generation.id, {"status": "failed"})
-            return None
+            if not task_id:
+                await self._mark_as_failed(db_generation.id)
+                return None
 
-        # Обновляем запись в БД
-        updated_gen = await self.generation_repo.update(
-            db_generation.id,
-            {
-                "status": "processing",
-                "external_task_id": task_id
-            }
-        )
+            # Update DB record
+            updated_gen = await self.generation_repo.update(
+                db_generation.id,
+                {
+                    "status": "processing",
+                    "external_task_id": task_id,
+                    "started_at": datetime.now()
+                }
+            )
 
-        await self.subscription_repo.decrement_quota(user_id)
+            # Decrement user quota
+            await self.subscription_repo.decrement_quota(user_id)
 
-        return GenerationResponse.model_validate(updated_gen)
+            # Обновляем запись в БД
+            updated_gen = await self.generation_repo.update(
+                db_generation.id,
+                {
+                    "status": "processing",
+                    "external_task_id": task_id
+                }
+            )
+            await self.subscription_repo.decrement_quota(user_id)
+
+            return GenerationResponse.model_validate(updated_gen)
+
+        except Exception as e:
+            await self._mark_as_failed(db_generation.id)
+            raise HTTPException(
+                status_code=503,
+                detail=f"Generation failed: {str(e)}"
+            )
 
     async def check_generation_status(
             self,
-            generation_id: uuid.UUID
-    ) -> Optional[GenerationResponse]:
+            generation_id: UUID,
+            api_client: KandinskyAPI
+    ) -> Optional[GenerationStatusResponse]:
+        """Checks generation status with Kandinsky API"""
         generation = await self.generation_repo.get(generation_id)
-        if not generation or not generation.external_task_id:
+        if not generation:
             return None
 
-        image_data = await self.kandinsky_api.check_generation_status(
-            generation.external_task_id
-        )
+        # If already completed/failed, return current status
+        if generation.status in ["completed", "failed"]:
+            return GenerationStatusResponse.model_validate(generation)
 
-        updates = {}
-        if image_data:
-            updates.update({
-                "status": "completed",
-                "result_url": self._store_image(generation_id)
-            })
-        else:
-            updates["status"] = "failed"
+        # Check with Kandinsky API
+        try:
+            if generation.external_task_id:
+                image_data = await api_client.check_generation_status(
+                    generation.external_task_id
+                )
 
-        updated_gen = await self.generation_repo.update(generation_id, updates)
-        return GenerationResponse.model_validate(updated_gen)
+                updates = {}
+                if image_data:
+                    updates.update({
+                        "status": "completed",
+                        "result_url": self._store_image(generation_id, image_data),
+                        "completed_at": datetime.now()
+                    })
+                else:
+                    updates["status"] = "failed"
+
+                updated_gen = await self.generation_repo.update(
+                    generation_id,
+                    updates
+                )
+                return GenerationStatusResponse.model_validate(updated_gen)
+
+        except Exception as e:
+            logger.error(f"Status check failed: {str(e)}")
+            await self._mark_as_failed(generation_id)
+
+        return None
 
     @staticmethod
     def _store_image(generation_id: uuid.UUID) -> str:
@@ -118,7 +164,12 @@ class GenerationService:
         generations = await self.generation_repo.get_by_user(user_id, limit=limit)
         return [GenerationResponse.model_validate(g) for g in generations]
 
-    async def cancel_generation(self, generation_id: uuid.UUID) -> bool:
+    async def cancel_generation(
+            self,
+            generation_id: uuid.UUID,
+            user_id: UUID,
+            api_client: KandinskyAPI
+    ) -> bool:
         """Отмена запущенной генерации
 
         Args:
@@ -134,22 +185,35 @@ class GenerationService:
         if not generation:
             raise HTTPException(status_code=404, detail="Generation not found")
 
+        if generation.user_id != user_id:
+            raise HTTPException(status_code=403, detail="Not your generation")
+
         if generation.status not in ["pending", "processing"]:
             return False
 
-        # Отменяем задачу в Kandinsky API
+            # Cancel in Kandinsky API
         if generation.external_task_id:
-            await self.kandinsky_api.cancel_generation(generation.external_task_id)
+            await api_client.cancel_generation(generation.external_task_id)
 
-        # Обновляем статус в БД
+            # Update DB
         await self.generation_repo.update(
             generation_id,
-            {"status": "cancelled", "cancelled_at": datetime.now()}
+            {
+                "status": "cancelled",
+                "cancelled_at": datetime.now()
+            }
         )
 
-        # Возвращаем квоту пользователю
-        await self.subscription_repo.increment_quota(generation.user_id)
+        # Refund quota
+        await self.subscription_repo.increment_quota(user_id)
         return True
+
+        # Helper methods
+
+    async def _check_quota(self, user_id: uuid.UUID) -> bool:
+        """Checks if user has available generations quota"""
+        subscription = await self.subscription_repo.get_by_user(user_id)
+        return subscription and subscription.remaining_generations > 0
 
     async def get_generation_history(
             self,
@@ -173,3 +237,22 @@ class GenerationService:
             offset=offset
         )
         return [GenerationResponse.model_validate(g) for g in generations]
+
+    async def _mark_as_failed(self, id):
+        pass
+
+    async def _mark_as_failed(self, generation_id: uuid.UUID):
+        """Marks generation as failed in DB"""
+        await self.generation_repo.update(
+            generation_id,
+            {
+                "status": "failed",
+                "failed_at": datetime.now()
+            }
+        )
+
+    @staticmethod
+    def _store_image(generation_id: uuid.UUID, image_data: bytes) -> str:
+        """Stores generated image and returns URL"""
+        # Implementation depends on your storage (S3, local, etc.)
+        return f"https://storage.example.com/{generation_id}.jpg"

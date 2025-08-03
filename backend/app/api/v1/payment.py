@@ -6,20 +6,31 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from yookassa import Payment as YooPayment
 
+from backend.app.core.dependencies import PaymentServiceDep
 from backend.app.core.dependencies import (
-    PaymentServiceDep,
     get_db
 )
 from backend.app.schemas.payment import PaymentResponse
 
-router = APIRouter(prefix="/payments", tags=["Payments"])
+router = APIRouter(
+    prefix="/payments",
+    tags=["Payments"],
+    responses={404: {"description": "Not found"}}
+)
 
 
 @router.post(
     "/create",
     response_model=PaymentResponse,
     summary="Create Payment",
-    description="Initialize new payment order",
+    description="""
+    Creates a new payment for an order.
+
+    Process:
+    1. Validates order exists
+    2. Creates payment in YooKassa
+    3. Saves payment reference in DB
+    """,
     responses={
         201: {"description": "Payment created"},
         400: {"description": "Invalid request"},
@@ -30,7 +41,7 @@ async def create_payment(
         service: PaymentServiceDep,
         order_id: UUID,
         amount: float,
-        description: str = "",
+        description: str = "Order payment",
         session: AsyncSession = Depends(get_db)
 ):
     payment = await service.create_payment(

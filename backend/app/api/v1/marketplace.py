@@ -1,15 +1,24 @@
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
+from pydantic import UUID4
 
 from backend.app.core.dependencies import (
     CurrentUserDep,
     MarketplaceServiceDep,
     PaymentServiceDep
 )
+from backend.app.schemas.marketplace import (
+    CartItemAdd,
+    DirectOrderResponse
+)
 from backend.app.schemas.marketplace import MarketItem, MarketFilters
 
-router = APIRouter(prefix="/marketplace", tags=["Marketplace"])
+router = APIRouter(
+    prefix="/marketplace",
+    tags=["Marketplace"],
+    responses={404: {"description": "Not found"}}
+)
 
 
 @router.get(
@@ -133,4 +142,64 @@ async def create_direct_order(
         raise HTTPException(
             status_code=404,
             detail="Item not found"
+        )
+
+
+@router.post(
+    "/cart/items",
+    summary="Add to Cart",
+    description="Add item to user's shopping cart",
+    responses={
+        200: {"description": "Item added"},
+        400: {"description": "Invalid quantity"},
+        404: {"description": "Item not found"}
+    }
+)
+async def add_to_cart(
+        item: CartItemAdd,
+        user: CurrentUserDep,
+        service: MarketplaceServiceDep
+):
+    try:
+        return await service.add_to_cart(
+            user_id=user.id,
+            item_id=item.item_id,
+            quantity=item.quantity
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+
+
+@router.post(
+    "/orders/direct",
+    response_model=DirectOrderResponse,
+    summary="Create Direct Order",
+    description="""
+    Create order directly from item (without cart).
+
+    Steps:
+    1. Creates order
+    2. Processes payment
+    3. Assigns to production
+    """,
+    responses={
+        201: {"description": "Order created"},
+        402: {"description": "Payment required"},
+        404: {"description": "Item not found"}
+    }
+)
+async def create_direct_order(
+        item_id: UUID4,
+        user: CurrentUserDep,
+        service: MarketplaceServiceDep
+):
+    try:
+        return await service.create_order_from_item(user.id, item_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
         )

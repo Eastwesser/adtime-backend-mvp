@@ -1,5 +1,9 @@
 from enum import Enum
-from typing import Dict, List
+from hashlib import new
+from typing import Dict, List, Optional
+
+from alembic.command import current
+from pydantic import BaseModel
 
 
 class OrderStatus(str, Enum):
@@ -17,9 +21,9 @@ class OrderStatus(str, Enum):
         CANCELLED: Заказ отменен (может быть на любом этапе).
 
     Пример использования:
-        >>> OrderStatus.CREATED
+         OrderStatus.CREATED
         <OrderStatus.CREATED: 'created'>
-        >>> OrderStatus.CREATED.value
+         OrderStatus.CREATED.value
         'created'
 
     Важно:
@@ -86,6 +90,28 @@ class OrderStatus(str, Enum):
     #
     #     return workflow.get(current_status, [])
 
+    def get_display_name(self, lang: str = "en") -> str:
+        """Локализованное название статуса"""
+        names = {
+            "en": {
+                self.CREATED: "Created",
+                self.PAID: "Paid",
+                self.PRODUCTION: "In Production",
+                self.SHIPPED: "Shipped",
+                self.COMPLETED: "Completed",
+                self.CANCELLED: "Cancelled"
+            },
+            "ru": {
+                self.CREATED: "Создан",
+                self.PAID: "Оплачен",
+                self.PRODUCTION: "В производстве",
+                self.SHIPPED: "Отправлен",
+                self.COMPLETED: "Завершен",
+                self.CANCELLED: "Отменен"
+            }
+        }
+        return names.get(lang, "en")[self]
+
     @classmethod
     def get_workflow(cls) -> Dict['OrderStatus', List['OrderStatus']]:
         """Возвращает граф допустимых переходов статусов."""
@@ -142,11 +168,17 @@ class OrderStatus(str, Enum):
             bool: True если переход допустим, иначе False
         """
         try:
-            current = cls(current_status)
-            new = cls(new_status)
-            return new in cls.get_transitions().get(current, [])
-        except ValueError:
-            return False
+            current_status = cls(current)
+            new_status = cls(new)
+        except ValueError as e:
+            raise ValueError(f"Invalid status: {e}")
+
+        allowed = cls.get_transitions().get(current_status, [])
+        if new_status not in allowed:
+            raise ValueError(
+                f"Invalid transition from {current} to {new}. "
+                f"Allowed: {[s.value for s in allowed]}"
+            )
 
     @classmethod
     def get_transitions(cls) -> Dict['OrderStatus', List['OrderStatus']]:
@@ -172,3 +204,10 @@ class OrderStatus(str, Enum):
                 f"Invalid transition from {current} to {new}. "
                 f"Allowed: {[s.value for s in allowed]}"
             )
+
+
+class StatusTransition(BaseModel):
+    """Модель для описания перехода статуса"""
+    from_status: OrderStatus
+    to_status: OrderStatus
+    reason: Optional[str] = None

@@ -146,3 +146,7 @@ class UserLoginResponse(BaseModel):
                 "requires_2fa": False
             }
         }
+
+
+class RefreshTokenRequest:
+    pass

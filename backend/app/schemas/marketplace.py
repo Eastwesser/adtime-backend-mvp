@@ -80,3 +80,11 @@ class MarketFilters(BaseModel):
 class CartItem(BaseModel):
     item_id: UUID
     quantity: int = Field(1, gt=0)
+
+
+class CartItemAdd:
+    pass
+
+
+class DirectOrderResponse:
+    pass

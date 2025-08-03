@@ -1,9 +1,15 @@
 # backend/app/api/v1/auth.py
+from datetime import timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from backend.app.core.dependencies import get_auth_service
-from backend.app.schemas.auth import TokenResponse, UserLoginResponse
+from backend.app.core.security import create_access_token, create_refresh_token
+from backend.app.schemas.auth import (
+    TokenResponse,
+    UserLoginResponse
+)
 from backend.app.schemas.user import UserCreate
 from backend.app.services.auth import AuthService
 
@@ -14,7 +20,14 @@ router = APIRouter(tags=["Authentication"])
     "/login",
     response_model=UserLoginResponse,
     summary="User Login",
-    description="Authenticate user and return JWT tokens",
+    description="""
+    Authenticate user and return JWT tokens.
+
+    Returns:
+    - access_token: Short-lived token (15-30 min)
+    - refresh_token: Long-lived token (7 days)
+    - user: User data
+    """,
     responses={
         200: {"description": "Successful authentication"},
         401: {"description": "Invalid credentials"},
@@ -39,13 +52,21 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    token = auth_service.create_access_token(user)
+    access_token = create_access_token(
+        str(user.id),
+        expires_delta=timedelta(minutes=30),
+        role=user.role
+    )
+
+    refresh_token = create_refresh_token(str(user.id))
+
     return UserLoginResponse(
         user=user,
-        token=TokenResponse(
-            access_token=token,
+        access_token=TokenResponse(
+            access_token=access_token,
             token_type="bearer"
-        )
+        ),
+        refresh_token=refresh_token
     )
 
 
@@ -75,16 +96,19 @@ async def register(
 
     try:
         user = await auth_service.register_user(user_create)
-    except EmailExistsError:
+        access_token = create_access_token(str(user.id))
+        refresh_token = create_refresh_token(str(user.id))
+
+        return UserLoginResponse(
+            user=user,
+            access_token=TokenResponse(
+                access_token=access_token,
+                token_type="bearer"
+            ),
+            refresh_token=refresh_token
+        )
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            detail=str(e)
         )
-
-    return UserLoginResponse(
-        user=user,
-        token=TokenResponse(
-            access_token=token,
-            token_type="bearer"
-        )
-    )

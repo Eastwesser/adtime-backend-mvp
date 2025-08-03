@@ -78,6 +78,12 @@ ORDER_METRICS = {
     )
 }
 
+ORDER_TRANSITIONS = Counter(
+    'order_status_transitions_total',
+    'Count of order status transitions',
+    ['from', 'to', 'result']
+)
+
 
 def setup_monitoring(app):
     @app.get("/metrics", include_in_schema=False)

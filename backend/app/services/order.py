@@ -15,8 +15,7 @@ from backend.app.repositories.generation import GenerationRepository
 from backend.app.repositories.order import OrderRepository
 from backend.app.schemas.order import OrderCreate, OrderResponse, ChatMessageSchema, OrderUpdate
 from backend.app.services.payment import PaymentService, logger
-from ..core.monitoring import ORDER_STATUS_TRANSITIONS
-from ..core.monitoring.monitoring import ORDER_METRICS
+from ..core.monitoring.monitoring import ORDER_METRICS, ORDER_STATUS_TRANSITIONS
 from ..core.order_status import OrderStatus
 from ..core.order_status import OrderStatus as CoreOrderStatus
 from ..models import Order

@@ -1,8 +1,12 @@
 from typing import Optional
 
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-from pydantic import Field, PostgresDsn, RedisDsn
+from pydantic import (
+    Field,
+    PostgresDsn,
+    RedisDsn, HttpUrl
+)
+from pydantic.v1 import validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from yookassa import Configuration
 
@@ -11,14 +15,34 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "AdTime Marketplace"
     DEBUG: bool = Field(default=False, env="DEBUG")
 
-    # Database - Updated to use PostgresDsn for validation
-    DATABASE_URL: PostgresDsn = "postgresql+asyncpg://postgres:adtime@localhost:5432/adtime"
-    DB_ECHO: bool = False
+    # Настройки базы данных
+    DATABASE_URL: PostgresDsn = Field(
+        default="postgresql+asyncpg://user:pass@localhost:5432/db",
+        description="URL подключения к PostgreSQL"
+    )
+
+    DB_ECHO: bool = Field(
+        default=False,
+        description="Логировать SQL-запросы"
+    )
 
     # S3
-    S3_ENDPOINT: str
-    S3_ACCESS_KEY: str
-    S3_SECRET_KEY: str
+    S3_ENDPOINT: HttpUrl = Field(
+        description="Endpoint S3-совместимого хранилища"
+    )
+
+    @validator('S3_ENDPOINT')
+    def validate_s3_endpoint(cls, v):
+        if not str(v).startswith(('http://', 'https://')):
+            raise ValueError('Invalid S3 endpoint URL')
+        return v
+
+    S3_ACCESS_KEY: str = Field(
+        description="Access key для S3"
+    )
+    S3_SECRET_KEY: str = Field(
+        description="Secret key для S3"
+    )
     S3_BUCKET: str = "adtime-dev"
     S3_PUBLIC_URL: str
 
@@ -32,7 +56,16 @@ class Settings(BaseSettings):
 
     # Auth
     JWT_PRIVATE_KEY: Optional[str] = None
-    JWT_PUBLIC_KEY: Optional[str] = None
+    JWT_PUBLIC_KEY: Optional[str] = Field(
+        default=None,
+        description="Публичный ключ для проверки JWT"
+    )
+
+    class Config:
+        env_file = ".env"
+        extra = "ignore"
+        case_sensitive = True
+
     ALGORITHM: str = "RS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
@@ -82,6 +115,23 @@ class Settings(BaseSettings):
 
 settings = Settings()
 settings.generate_keys()
+
+# Автогенерация ключей JWT если не указаны
+if not settings.JWT_PRIVATE_KEY:
+    from cryptography.hazmat.primitives.asymmetric import rsa
+
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    settings.JWT_PRIVATE_KEY = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    ).decode()
+
+    public_key = private_key.public_key()
+    settings.JWT_PUBLIC_KEY = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    ).decode()
 
 
 class YooKassaConfig:

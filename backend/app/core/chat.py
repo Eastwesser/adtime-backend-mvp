@@ -1,7 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 
 from app.core.websocket_manager import ws_manager
-from app.repositories.order import OrderRepository
+from app.repositories import OrderRepository
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
