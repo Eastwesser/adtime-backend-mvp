@@ -1,9 +1,9 @@
 from typing import List
 from uuid import UUID
 
+from sqlalchemy import desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import desc
 
 from backend.app.models.chat import ChatMessage
 from .base import BaseRepository
@@ -27,13 +27,14 @@ class ChatRepository(BaseRepository[ChatMessage]):
     - OrderService для общения с клиентом
     - WebSocket обработчиках чата
     """
+
     def __init__(self, session: AsyncSession):
         super().__init__(ChatMessage, session)
 
     async def get_by_order(
-        self,
-        order_id: UUID,
-        limit: int = 100
+            self,
+            order_id: UUID,
+            limit: int = 100
     ) -> List[ChatMessage]:
         """Получает сообщения чата для заказа."""
         result = await self.session.execute(
@@ -45,9 +46,9 @@ class ChatRepository(BaseRepository[ChatMessage]):
         return result.scalars().all()
 
     async def get_unread_count(
-        self,
-        order_id: UUID,
-        user_id: UUID
+            self,
+            order_id: UUID,
+            user_id: UUID
     ) -> int:
         """Получает количество непрочитанных сообщений."""
         result = await self.session.execute(
@@ -61,9 +62,9 @@ class ChatRepository(BaseRepository[ChatMessage]):
         return len(result.scalars().all())
 
     async def mark_all_as_read(
-        self,
-        order_id: UUID,
-        user_id: UUID
+            self,
+            order_id: UUID,
+            user_id: UUID
     ) -> int:
         """Помечает все сообщения как прочитанные."""
         result = await self.session.execute(

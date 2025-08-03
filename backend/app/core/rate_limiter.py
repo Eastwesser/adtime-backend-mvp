@@ -1,8 +1,9 @@
 import logging
 from datetime import datetime
 
-import redis
 from fastapi import HTTPException
+
+import redis
 
 logger = logging.getLogger(__name__)
 
@@ -12,8 +13,8 @@ class RateLimiter:
     Реализация rate limiting на основе Redis
 
     Пример использования:
-        >>> limiter = RateLimiter(redis, "10/minute")
-        >>> await limiter.check_request("user123")
+         limiter = RateLimiter(redis, "10/minute")
+         await limiter.check_request("user123")
     """
 
     def __init__(self, redis_client: redis.Redis, rate_limit: str):

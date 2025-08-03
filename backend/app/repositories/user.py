@@ -32,6 +32,7 @@ class UserRepository(BaseRepository[User]):
     - Основной репозиторий для AuthService
     - Используется практически во всех сервисах
     """
+
     def __init__(self, session: AsyncSession):
         super().__init__(User, session)  # Сессия сохраняется в базовом классе
 

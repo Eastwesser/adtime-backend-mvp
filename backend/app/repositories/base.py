@@ -31,6 +31,7 @@ class BaseRepository(Generic[ModelType]):
     - Для мягкого удаления модель должна иметь поля is_deleted и deleted_at
     - Для кастомных запросов следует создавать методы в дочерних репозиториях
     """
+
     def __init__(self, model: type[ModelType], session: AsyncSession):
         """Инициализация репозитория.
 

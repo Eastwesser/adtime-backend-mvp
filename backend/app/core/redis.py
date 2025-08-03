@@ -1,6 +1,6 @@
 from typing import Optional
+
 import redis.asyncio as redis
-from pydantic import RedisDsn
 
 from backend.app.core.config import settings
 from backend.app.core.logger import logger
@@ -14,8 +14,8 @@ class RedisClient:
     - Логированием ошибок
 
     Пример использования:
-        >>> redis = RedisClient()
-        >>> await redis.set("key", "value")
+        redis = RedisClient()
+        await redis.set("key", "value")
     """
 
     _instance: Optional['RedisClient'] = None

@@ -31,6 +31,7 @@ class SubscriptionRepository(BaseRepository[Subscription]):
     - GenerationService для контроля квот
     - SubscriptionService для управления подписками
     """
+
     def __init__(self, session: AsyncSession):
         super().__init__(Subscription, session)
 

@@ -30,6 +30,7 @@ class FactoryRepository(BaseRepository[Factory]):
     - ProductionService для распределения заказов
     - OrderService при назначении на производство
     """
+
     def __init__(self, session: AsyncSession):
         super().__init__(Factory, session)
 

@@ -31,6 +31,7 @@ class NotificationRepository(BaseRepository[Notification]):
     - NotificationService для основного workflow
     - WebSocket обработчиках для real-time уведомлений
     """
+
     def __init__(self, session: AsyncSession):
         super().__init__(Notification, session)
 

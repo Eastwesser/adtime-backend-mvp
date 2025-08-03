@@ -2,7 +2,6 @@ import asyncio
 import base64
 from asyncio import Timeout
 from contextlib import asynccontextmanager
-from functools import lru_cache
 from typing import Optional, Literal
 
 import httpx

@@ -32,6 +32,7 @@ class PaymentRepository(BaseRepository[Payment]):
     - Основной репозиторий для PaymentService
     - Тесно связан с OrderRepository
     """
+
     def __init__(self, session: AsyncSession):
         super().__init__(Payment, session)
 

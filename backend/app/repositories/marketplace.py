@@ -46,6 +46,7 @@ class MarketplaceRepository(BaseRepository[MarketItem]):
     - Транзакционность критичных операций
     - Валидация данных перед сохранением
     """
+
     def __init__(
             self,
             session: AsyncSession,

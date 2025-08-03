@@ -1,4 +1,3 @@
-import boto3
 from botocore.exceptions import ClientError
 
 from backend.app.core.config import settings

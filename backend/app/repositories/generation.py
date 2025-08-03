@@ -32,6 +32,7 @@ class GenerationRepository(BaseRepository[Generation]):
     - GenerationService для основного workflow
     - Admin API для статистики
     """
+
     def __init__(self, session: AsyncSession):
         super().__init__(Generation, session)
         self.generation_repo = None
