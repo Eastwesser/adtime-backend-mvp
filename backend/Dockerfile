@@ -34,4 +34,6 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 
 RUN chmod +x /app/run_migrations.sh
 
+RUN ln -s /app /backend
+
 CMD ["sh", "-c", "alembic upgrade head && poetry run uvicorn app.main:app --host 0.0.0.0 --port 8042"]

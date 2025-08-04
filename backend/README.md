@@ -1,5 +1,20 @@
 # AdTime Backend API
 
+
+Clear all, before work:
+
+```bash
+docker-compose down --remove-orphans -v
+docker system prune -f
+```
+Build:
+```bash
+docker-compose up --build  # Builds images and starts all services
+
+# Backend: http://localhost:8042
+# Prometheus: http://localhost:9090
+```
+
 Alembic DB Migrations:
 
 ```bash
@@ -17,12 +32,6 @@ docker-compose build --no-cache backend
 docker-compose up
 ```
 
-Clear:
-
-```bash
-docker-compose down --remove-orphans -v
-docker system prune -f
-```
 
 ## Project Tree:
 

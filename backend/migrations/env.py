@@ -1,23 +1,35 @@
-import asyncio
 import sys
-from logging.config import fileConfig
+from os.path import abspath, dirname
 from pathlib import Path
+
+# Set up Python path 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
+print(f"Python paths: {sys.path}")
+
+try:
+    from app.models.base import Base
+    from app.core.config import settings
+except ImportError:
+    from backend.app.models.base import Base
+    from backend.app.core.config import settings
+
+import asyncio
+from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.pool import NullPool
 
-# Add project to path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 # Import after path is set
-from backend.app.models.base import Base
-from backend.app.core.config import settings
+from app.models.base import Base  # Changed from backend.app.models.base
+from app.core.config import settings  # Changed from backend.app.core.config
 
 config = context.config
-fileConfig(config.config_file_name)
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
 target_metadata = Base.metadata
-
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode."""
