@@ -35,88 +35,133 @@ docker-compose up
 
 ## Project Tree:
 
+To get it run : 
+
+```bash
+tree -L 5
+```
+
 ```text
-adtime-mvp/
-├── backend/
-│   ├── .env
-│   ├── Dockerfile
+.
+├── backend
 │   ├── alembic.ini
-│   ├── pyproject.toml
-│   ├── run_migrations.sh
-│   ├── migrate.py
-│   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py
-│   │   ├── core/
+│   ├── app
+│   │   ├── api
 │   │   │   ├── __init__.py
+│   │   │   └── v1
+│   │   │       ├── admin.py
+│   │   │       ├── auth.py
+│   │   │       ├── generate.py
+│   │   │       ├── __init__.py
+│   │   │       ├── marketplace.py
+│   │   │       ├── payment.py
+│   │   │       └── users.py
+│   │   ├── core
+│   │   │   ├── chat.py
 │   │   │   ├── config.py
 │   │   │   ├── database.py
 │   │   │   ├── dependencies.py
+│   │   │   ├── __init__.py
+│   │   │   ├── logger
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── logger.py
+│   │   │   ├── monitoring
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── monitoring.py
+│   │   │   │   └── prometheus.yml
+│   │   │   ├── order_status.py
+│   │   │   ├── rate_limiter.py
+│   │   │   ├── redis.py
 │   │   │   ├── security.py
-│   │   │   ├── celery.py
 │   │   │   ├── storage.py
-│   │   │   └── monitoring/
-│   │   │       ├── __init__.py
-│   │   │       ├── monitoring.py
-│   │   │       └── prometheus.yml
-│   │   ├── api/
-│   │   │   └── v1/
-│   │   │       ├── __init__.py
-│   │   │       ├── auth.py
-│   │   │       ├── generate.py
-│   │   │       ├── payment.py
-│   │   │       ├── users.py
-│   │   │       ├── admin.py
-│   │   │       └── marketplace.py
-│   │   ├── models/
-│   │   │   ├── __init__.py
+│   │   │   ├── testing.py
+│   │   │   └── websocket_manager.py
+│   │   ├── __init__.py
+│   │   ├── main.py
+│   │   ├── models
 │   │   │   ├── base.py
-│   │   │   ├── user.py
+│   │   │   ├── chat.py
+│   │   │   ├── factory.py
 │   │   │   ├── generation.py
+│   │   │   ├── __init__.py
+│   │   │   ├── marketplace.py
+│   │   │   ├── notifications.py
 │   │   │   ├── order.py
 │   │   │   ├── payment.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── factory.cpython-312.pyc
+│   │   │   │   └── __init__.cpython-312.pyc
+│   │   │   ├── review.py
 │   │   │   ├── subscription.py
-│   │   │   └── marketplace.py
-│   │   ├── repositories/
-│   │   │   ├── __init__.py
+│   │   │   └── user.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   └── main.cpython-312.pyc
+│   │   ├── repositories
 │   │   │   ├── base.py
-│   │   │   ├── user.py
+│   │   │   ├── chat.py
+│   │   │   ├── factory.py
 │   │   │   ├── generation.py
-│   │   │   ├── order.py
-│   │   │   ├── payment.py
-│   │   │   ├── subscription.py
-│   │   │   ├── marketplace.py
-│   │   │   └── factory.py
-│   │   ├── schemas/
 │   │   │   ├── __init__.py
-│   │   │   ├── auth.py
-│   │   │   ├── user.py
-│   │   │   ├── generation.py
+│   │   │   ├── marketplace.py
+│   │   │   ├── notification.py
 │   │   │   ├── order.py
 │   │   │   ├── payment.py
 │   │   │   ├── subscription.py
-│   │   │   ├── marketplace.py
+│   │   │   └── user.py
+│   │   ├── schemas
 │   │   │   ├── admin.py
-│   │   │   └── errors.py
-│   │   ├── services/
-│   │   │   ├── __init__.py
-│   │   │   ├── base.py
 │   │   │   ├── auth.py
+│   │   │   ├── errors.py
 │   │   │   ├── generation.py
-│   │   │   ├── kandinsky.py
+│   │   │   ├── __init__.py
+│   │   │   ├── marketplace.py
+│   │   │   ├── notifications.py
 │   │   │   ├── order.py
 │   │   │   ├── payment.py
 │   │   │   ├── subscription.py
-│   │   │   ├── marketplace.py
-│   │   │   └── production.py
-│   │   └── tasks/
+│   │   │   └── user.py
+│   │   └── services
+│   │       ├── auth.py
+│   │       ├── base.py
+│   │       ├── generation.py
 │   │       ├── __init__.py
-│   │       └── payment_tasks.py
-│   └── migrations/
-│       ├── versions/
-│       │   └── ... (файлы миграций)
-│       └── env.py
-└── docker-compose.yml
+│   │       ├── kandinsky.py
+│   │       ├── marketplace.py
+│   │       ├── notifications.py
+│   │       ├── order.py
+│   │       ├── payment.py
+│   │       ├── production.py
+│   │       ├── subscription.py
+│   │       ├── user.py
+│   │       └── yookassa_adapter.py
+│   ├── Dockerfile
+│   ├── __init__.py
+│   ├── migrate.py
+│   ├── migrations
+│   │   ├── env.py
+│   │   ├── __pycache__
+│   │   │   └── env.cpython-312.pyc
+│   │   ├── README
+│   │   ├── script.py.mako
+│   │   └── versions
+│   │       └── 2217af24be5b_initial_migration.py
+│   ├── poetry.lock
+│   ├── __pycache__
+│   │   └── __init__.cpython-312.pyc
+│   ├── pyproject.toml
+│   ├── README.md
+│   ├── requirements-dev.txt
+│   ├── requirements.txt
+│   ├── run_migrations.py
+│   └── run_migrations.sh
+├── docker-compose.yml
+├── Makefile
+├── README.md
+├── requirements-dev.txt
+└── requirements.txt
+
+18 directories, 100 files
 ```
 
 ## Ключевые файлы:

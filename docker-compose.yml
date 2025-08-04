@@ -31,39 +31,19 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: >
-      sh -c "python -c 'import sys; print(sys.path)' &&
-      alembic upgrade head &&
-      poetry run uvicorn app.main:app --host 0.0.0.0 --port 8042 --reload"
     environment:
-      PYTHONPATH: /app   
+      PYTHONPATH: "/app:/backend"
     ports:
       - "8042:8042"
     env_file:
       - ./backend/.env
     volumes:
       - ./backend:/app
-      - ./backend/migrations:/app/migrations
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks:
-      - default
-
-  
-
-  # celery:
-  #   build: ./backend
-  #   command: poetry run celery -A app.core.celery:app worker --loglevel=info --pool=solo
-  #   environment:
-  #     - PYTHONPATH=/app
-  #   volumes:
-  #     - ./backend:/app
-  #   depends_on:
-  #     - redis
-  #     - backend
 
   prometheus:
     networks:

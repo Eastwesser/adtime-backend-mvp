@@ -2,18 +2,8 @@ import sys
 from os.path import abspath, dirname
 from pathlib import Path
 
-# Set up Python path 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-
-print(f"Python paths: {sys.path}")
-
-try:
-    from app.models.base import Base
-    from app.core.config import settings
-except ImportError:
-    from backend.app.models.base import Base
-    from backend.app.core.config import settings
+from backend.app.models.base import Base
+from backend.app.core.config import settings
 
 import asyncio
 from logging.config import fileConfig
@@ -21,10 +11,6 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.pool import NullPool
-
-# Import after path is set
-from app.models.base import Base  # Changed from backend.app.models.base
-from app.core.config import settings  # Changed from backend.app.core.config
 
 config = context.config
 if config.config_file_name is not None:

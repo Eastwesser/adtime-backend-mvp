@@ -13,7 +13,8 @@ from typing import Optional, Dict, List
 from sqlalchemy import UUID, Enum, ForeignKey, JSON, Float, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.models import Factory, MarketItem
+from backend.app.models.factory import Factory
+from backend.app.models.marketplace import MarketItem
 from backend.app.models.base import Base
 from backend.app.models.chat import ChatMessage
 from backend.app.models.generation import GenerationTask
