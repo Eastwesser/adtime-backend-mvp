@@ -1,5 +1,12 @@
 # AdTime Backend API
 
+Download dependencies
+```bash
+poetry install  # if using Poetry
+# or
+pip install -r requirements.txt
+```
+
 Alembic DB Migrations:
 
 ```bash
