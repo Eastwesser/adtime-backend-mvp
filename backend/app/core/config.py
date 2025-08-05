@@ -1,26 +1,21 @@
 from typing import Optional
-
 from cryptography.hazmat.primitives import serialization
-from pydantic import (
-    Field,
-    PostgresDsn,
-    RedisDsn, HttpUrl
-)
+from pydantic import Field, PostgresDsn, RedisDsn, HttpUrl
 from pydantic.v1 import validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from yookassa import Configuration
+import rsa
 
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "AdTime Marketplace"
     DEBUG: bool = Field(default=False, env="DEBUG")
 
-    # Настройки базы данных
+    # Database settings
     DATABASE_URL: PostgresDsn = Field(
         default="postgresql+asyncpg://user:pass@localhost:5432/db",
         description="URL подключения к PostgreSQL"
     )
-
     DB_ECHO: bool = Field(
         default=False,
         description="Логировать SQL-запросы"
@@ -30,13 +25,6 @@ class Settings(BaseSettings):
     S3_ENDPOINT: HttpUrl = Field(
         description="Endpoint S3-совместимого хранилища"
     )
-
-    @validator('S3_ENDPOINT')
-    def validate_s3_endpoint(cls, v):
-        if not str(v).startswith(('http://', 'https://')):
-            raise ValueError('Invalid S3 endpoint URL')
-        return v
-
     S3_ACCESS_KEY: str = Field(
         description="Access key для S3"
     )
@@ -51,8 +39,8 @@ class Settings(BaseSettings):
     YOOKASSA_SECRET_KEY: str
     YOOKASSA_RETURN_URL: str = "https://yourapp.com/payment/return"
 
-    # Redis - Updated to use RedisDsn
-    REDIS_URL: RedisDsn = "redis://redis:6379"
+    # Redis
+    REDIS_URL: RedisDsn = "redis://redis:6379/0" 
 
     # Auth
     JWT_PRIVATE_KEY: Optional[str] = None
@@ -60,12 +48,6 @@ class Settings(BaseSettings):
         default=None,
         description="Публичный ключ для проверки JWT"
     )
-
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
-        case_sensitive = True
-
     ALGORITHM: str = "RS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
@@ -82,8 +64,15 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",
-        env_file_encoding="utf-8"
+        env_file_encoding="utf-8",
+        case_sensitive=True
     )
+
+    @validator('S3_ENDPOINT')
+    def validate_s3_endpoint(cls, v):
+        if not str(v).startswith(('http://', 'https://')):
+            raise ValueError('Invalid S3 endpoint URL')
+        return v
 
     def generate_keys(self):
         """Generate RSA keys if not provided"""
@@ -115,23 +104,6 @@ class Settings(BaseSettings):
 
 settings = Settings()
 settings.generate_keys()
-
-# Автогенерация ключей JWT если не указаны
-if not settings.JWT_PRIVATE_KEY:
-    from cryptography.hazmat.primitives.asymmetric import rsa
-
-    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    settings.JWT_PRIVATE_KEY = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()
-    ).decode()
-
-    public_key = private_key.public_key()
-    settings.JWT_PUBLIC_KEY = public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    ).decode()
 
 
 class YooKassaConfig:

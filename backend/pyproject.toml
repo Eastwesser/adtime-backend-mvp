@@ -29,6 +29,7 @@ pydantic = { extras = ["email"], version = "^2.11.7" }
 python-multipart = "^0.0.20"
 prometheus-client = "^0.22.1"
 redis = "^6.2.0"
+tenacity = "^8.2.3"
 
 
 [tool.poetry.group.dev.dependencies]

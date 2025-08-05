@@ -8,15 +8,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from yookassa import Configuration
 from yookassa import Payment as YooPayment
 
-from app.core.monitoring.monitoring import PAYMENT_ERRORS, PAYMENT_STATUS, PAYMENT_AMOUNTS
+from app.core.monitoring.monitoring import PAYMENT_METRICS
 from app.core.order_status import OrderStatus
 from app.services.yookassa_adapter import YooKassaAdapter, PaymentError
-from backend.app.core.config import settings
-from backend.app.core.logger import setup_logger
-from backend.app.repositories.payment import PaymentRepository
-from backend.app.schemas.payment import PaymentResponse
+from app.core.config import settings
+from app.core.logger import get_logger
+from app.repositories.payment import PaymentRepository
+from app.schemas.payment import PaymentResponse
 
-logger = setup_logger(__name__)
+logger = get_logger(__name__)
 
 
 class PaymentService:
@@ -48,7 +48,7 @@ class PaymentService:
         if amount > 1_000_000:  # Лимит 1 млн руб
             raise HTTPException(400, "Amount exceeds maximum limit")
 
-        PAYMENT_AMOUNTS.observe(amount)  # Метрика
+        PAYMENT_METRICS['amounts'].observe(amount)
 
         try:
             payment = await self.yookassa.create_payment(
@@ -81,7 +81,7 @@ class PaymentService:
         try:
             return await self.yookassa.get_payment(payment_id)
         except Exception as e:
-            PAYMENT_ERRORS.labels(error_type="lookup_error").inc()
+            PAYMENT_METRICS['errors'].labels(type="lookup_error").inc()
             logger.error(f"Payment lookup failed: {str(e)}")
             return None
 
@@ -182,10 +182,10 @@ class PaymentService:
                 payment_id,
                 {"status": yoo_payment.status}
             )
-            PAYMENT_STATUS.labels(status="cancelled").inc()
+            PAYMENT_METRICS['status_changes'].labels(status="cancelled").inc()
             return True
         except PaymentError as e:
-            PAYMENT_ERRORS.labels(error_type="cancel_error").inc()
+            PAYMENT_METRICS['errors'].labels(type="lookup_error").inc()
             logger.error(f"Payment cancellation failed: {str(e)}")
             raise HTTPException(500, "Cancellation failed")
 

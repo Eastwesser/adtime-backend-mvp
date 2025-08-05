@@ -8,8 +8,8 @@ from sqlalchemy import Row, RowMapping, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from backend.app.models.marketplace import MarketItem
-from backend.app.models.order import Order
+from app.models.marketplace import MarketItem
+from app.models.order import Order
 from .base import BaseRepository
 from ..schemas import CartItem
 from ..services import PaymentService

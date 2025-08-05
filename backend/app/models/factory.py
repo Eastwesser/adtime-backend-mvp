@@ -2,14 +2,15 @@
 Модели для маркетплейса:
 - Factory: производственные предприятия
 """
+from __future__ import annotations 
 from typing import Any, Optional
 from uuid import UUID
 
 from sqlalchemy import String, Float, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.models.order import Order
-from backend.app.models.base import Base
+from app.models.base import Base
+
 
 class Factory(Base):
     current_load = None
@@ -32,7 +33,7 @@ class Factory(Base):
     api_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     api_key: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
-    # Связи
+    # Связи - используем ТОЛЬКО строковую ссылку
     orders: Mapped[list["Order"]] = relationship(
         "Order",
         back_populates="factory",

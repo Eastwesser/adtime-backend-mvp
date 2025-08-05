@@ -2,8 +2,8 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from backend.app.repositories.notification import NotificationRepository
-from backend.app.schemas.notifications import (
+from app.repositories.notification import NotificationRepository
+from app.schemas.notifications import (
     NotificationType,
     NotificationResponse
 )

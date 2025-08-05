@@ -1655,6 +1655,22 @@ typing-extensions = {version = ">=4.10.0", markers = "python_version < \"3.13\""
 full = ["httpx (>=0.27.0,<0.29.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.18)", "pyyaml"]
 
 [[package]]
+name = "tenacity"
+version = "8.5.0"
+description = "Retry code until it succeeds"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "tenacity-8.5.0-py3-none-any.whl", hash = "sha256:b594c2a5945830c267ce6b79a166228323ed52718f30302c1359836112346687"},
+    {file = "tenacity-8.5.0.tar.gz", hash = "sha256:8bc6c0c8a09b31e6cad13c47afbed1a567518250a9a171418582ed8d9c20ca78"},
+]
+
+[package.extras]
+doc = ["reno", "sphinx"]
+test = ["pytest", "tornado (>=4.5)", "typeguard"]
+
+[[package]]
 name = "types-cffi"
 version = "1.17.0.20250801"
 description = "Typing stubs for cffi"
@@ -1926,4 +1942,4 @@ urllib3 = "*"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "99d7672e7fc9b1deadc1d138f215f82783321c05848577892eceb083e9b80485"
+content-hash = "9d19fe456d4dfb23c2733ecab1402cc3c21f1dc737531114641ce20a9d79ac74"

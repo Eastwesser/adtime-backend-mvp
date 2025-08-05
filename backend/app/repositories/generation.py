@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from backend.app.models.generation import Generation
+from app.models.generation import Generation
 from .base import BaseRepository
 from ..schemas import GenerationResponse
 

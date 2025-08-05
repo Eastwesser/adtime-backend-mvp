@@ -6,11 +6,11 @@ from fastapi import HTTPException
 from jose import jwt, ExpiredSignatureError, JWTError
 from passlib.context import CryptContext
 
-from backend.app.core.config import settings
-from backend.app.models.user import User
-from backend.app.repositories.user import UserRepository
-from backend.app.schemas.auth import Token
-from backend.app.schemas.user import UserCreate, UserResponse
+from app.core.config import settings
+from app.models.user import User
+from app.repositories.user import UserRepository
+from app.schemas.auth import Token
+from app.schemas.user import UserCreate, UserResponse
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

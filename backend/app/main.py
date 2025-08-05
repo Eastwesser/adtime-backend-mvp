@@ -5,11 +5,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-from backend.app.api.v1 import router as api_router
-from backend.app.core.config import settings
-from backend.app.core.database import init_db
-from backend.app.core.monitoring import setup_monitoring
-from backend.app.schemas.errors import HTTPError, ValidationError
+from app.api.v1 import router as api_router
+from app.core.config import settings
+from app.core.database import init_db
+from app.core.monitoring import setup_monitoring
+from app.schemas.errors import HTTPError, ValidationError
 
 
 @asynccontextmanager

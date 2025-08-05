@@ -6,7 +6,7 @@ from sqlalchemy import update, delete, select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import Select
 
-from backend.app.models.base import Base
+from app.models.base import Base
 
 ModelType = TypeVar("ModelType", bound=Base)
 

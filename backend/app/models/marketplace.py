@@ -4,14 +4,14 @@
 - MarketItem: товары на маркетплейсе
 - Factory: производственные предприятия
 """
+from __future__ import annotations 
 from enum import Enum
 from uuid import UUID
 
 from sqlalchemy import String, ForeignKey, JSON, Float, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.models import User, Order
-from backend.app.models.base import Base
+from app.models.base import Base
 
 
 class ProductType(str, Enum):

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Generic, TypeVar, Optional
 from uuid import UUID
 
-from backend.app.repositories.base import BaseRepository
+from app.repositories.base import BaseRepository
 
 ModelType = TypeVar("ModelType")
 CreateSchemaType = TypeVar("CreateSchemaType")

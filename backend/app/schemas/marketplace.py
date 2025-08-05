@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProductType(str, Enum):
@@ -53,7 +53,7 @@ class MarketItem(BaseModel):
         example="b2c3d4e5-f6g7-8901-h2i3-j4k5l6m7n8o9",
     )
 
-    class Config:
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
@@ -65,9 +65,9 @@ class MarketItem(BaseModel):
                 "rating": 4.5,
                 "designer_id": "b2c3d4e5-f6g7-8901-h2i3-j4k5l6m7n8o9"
             }
-        }
-        from_attributes = True
-
+        },
+        from_attributes = True,
+    )
 
 class MarketFilters(BaseModel):
     item_type: Optional[ProductType] = None
@@ -108,7 +108,7 @@ class CartItemAdd(BaseModel):
         example={"size": "A4", "material": "glossy"}
     )
 
-    class Config:
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "item_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
@@ -116,7 +116,7 @@ class CartItemAdd(BaseModel):
                 "specs": {"size": "A3"}
             }
         }
-
+    )
 
 class DirectOrderResponse(BaseModel):
     """Модель ответа при создании прямого заказа.
@@ -149,7 +149,7 @@ class DirectOrderResponse(BaseModel):
         example="https://payment.example.com/checkout/123"
     )
 
-    class Config:
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "order_id": "b2c3d4e5-f6g7-8901-h2i3-j4k5l6m7n8o9",
@@ -158,3 +158,4 @@ class DirectOrderResponse(BaseModel):
                 "payment_url": "https://payment.example.com/checkout/123"
             }
         }
+    )

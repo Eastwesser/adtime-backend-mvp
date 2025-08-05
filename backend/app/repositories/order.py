@@ -9,7 +9,7 @@ from sqlalchemy import Row, RowMapping
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from backend.app.models.order import Order
+from app.models.order import Order
 from .base import BaseRepository
 
 

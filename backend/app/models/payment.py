@@ -6,6 +6,7 @@
 - Статусы оплаты
 - Связь с заказом
 """
+from __future__ import annotations 
 import uuid
 from datetime import datetime
 from typing import Optional
@@ -13,8 +14,7 @@ from typing import Optional
 from sqlalchemy import UUID, String, Enum, ForeignKey, JSON, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.models.base import Base
-from backend.app.models.order import Order
+from app.models.base import Base
 
 
 class Payment(Base):

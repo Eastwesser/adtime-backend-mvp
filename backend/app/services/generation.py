@@ -6,10 +6,10 @@ from typing import List, Optional
 from fastapi import HTTPException
 
 from app.core.logger import logger
-from backend.app.repositories.generation import GenerationRepository
-from backend.app.repositories.subscription import SubscriptionRepository
-from backend.app.schemas.generation import GenerationCreate, GenerationResponse, GenerationStatusResponse
-from backend.app.services.kandinsky import KandinskyAPI, GenerationRequest
+from app.repositories.generation import GenerationRepository
+from app.repositories.subscription import SubscriptionRepository
+from app.schemas.generation import GenerationCreate, GenerationResponse, GenerationStatusResponse
+from app.services.kandinsky import KandinskyAPI, GenerationRequest
 
 
 class GenerationService:
@@ -109,7 +109,7 @@ class GenerationService:
 
     async def check_generation_status(
             self,
-            generation_id: UUID,
+            generation_id: uuid.UUID,
             api_client: KandinskyAPI
     ) -> Optional[GenerationStatusResponse]:
         """Checks generation status with Kandinsky API"""

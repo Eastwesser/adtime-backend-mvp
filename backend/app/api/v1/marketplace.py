@@ -3,16 +3,16 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException
 from pydantic import UUID4
 
-from backend.app.core.dependencies import (
+from app.core.dependencies import (
     CurrentUserDep,
     MarketplaceServiceDep,
     PaymentServiceDep
 )
-from backend.app.schemas.marketplace import (
+from app.schemas.marketplace import (
     CartItemAdd,
     DirectOrderResponse
 )
-from backend.app.schemas.marketplace import MarketItem, MarketFilters
+from app.schemas.marketplace import MarketItem, MarketFilters
 
 router = APIRouter(
     prefix="/marketplace",

@@ -6,17 +6,14 @@
 - Роли (user, designer, admin)
 - Связи с другими моделями
 """
+from __future__ import annotations 
 import uuid
 from typing import List, Optional
 
 from sqlalchemy import UUID, String, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.models import Order, Subscription
-from backend.app.models.base import Base
-from backend.app.models.generation import GenerationTask
-from backend.app.models.notifications import Notification
-
+from app.models.base import Base
 
 class User(Base):
     """Модель пользователя системы с ролями и подпиской"""
@@ -50,8 +47,8 @@ class User(Base):
 
     # Связи с другими моделями
     generations: Mapped[List["GenerationTask"]] = relationship(back_populates="user")  # Генерации пользователя
-    orders: Mapped[List["Order"]] = relationship(back_populates="user")  # Заказы пользователя
-    subscription: Mapped["Subscription"] = relationship(back_populates="user")  # Подписка пользователя
+    orders: Mapped[List["Order"]] = relationship("Order", back_populates="user")  # Заказы пользователя
+    subscription: Mapped["Subscription"] = relationship("Subscription", back_populates="user") # Подписка пользователя
     notifications: Mapped[List["Notification"]] = relationship(
         "Notification",
         back_populates="user",

@@ -6,11 +6,11 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from yookassa import Payment as YooPayment
 
-from backend.app.core.dependencies import PaymentServiceDep
-from backend.app.core.dependencies import (
+from app.core.dependencies import PaymentServiceDep
+from app.core.dependencies import (
     get_db
 )
-from backend.app.schemas.payment import PaymentResponse
+from app.schemas.payment import PaymentResponse
 
 router = APIRouter(
     prefix="/payments",

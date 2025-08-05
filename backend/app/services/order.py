@@ -10,12 +10,12 @@ from fastapi import HTTPException
 from sqlalchemy import select, Row, RowMapping
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.repositories.chat import ChatRepository
-from backend.app.repositories.generation import GenerationRepository
-from backend.app.repositories.order import OrderRepository
-from backend.app.schemas.order import OrderCreate, OrderResponse, ChatMessageSchema, OrderUpdate
-from backend.app.services.payment import PaymentService, logger
-from ..core.monitoring.monitoring import ORDER_METRICS, ORDER_STATUS_TRANSITIONS
+from app.repositories.chat import ChatRepository
+from app.repositories.generation import GenerationRepository
+from app.repositories.order import OrderRepository
+from app.schemas.order import OrderCreate, OrderResponse, ChatMessageSchema, OrderUpdate
+from app.services.payment import PaymentService, logger
+from ..core.monitoring.monitoring import ORDER_METRICS
 from ..core.order_status import OrderStatus
 from ..core.order_status import OrderStatus as CoreOrderStatus
 from ..models import Order
@@ -468,7 +468,7 @@ class OrderService:
             updated = await self.order_repo.update_status(order_id, new_status)
 
             # Метрики
-            ORDER_STATUS_TRANSITIONS.labels(
+            ORDER_METRICS['transitions'].labels(
                 from_status=order.status,
                 to_status=new_status
             ).inc()

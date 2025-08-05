@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter
 
-from backend.app.core.dependencies import AdminDep, GenerationServiceDep
-from backend.app.schemas.admin import GenerationStatsResponse
+from app.core.dependencies import AdminDep, GenerationServiceDep
+from app.schemas.admin import GenerationStatsResponse
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 

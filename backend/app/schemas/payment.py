@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, Dict
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PaymentStatus(str, Enum):
@@ -75,8 +75,8 @@ class PaymentResponse(PaymentCreate):
         example="2023-01-01T12:00:00Z"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes = True,
         json_schema_extra = {
             "example": {
                 "id": "b2c3d4e5-6789-0123-4567-890123456789",
@@ -86,9 +86,9 @@ class PaymentResponse(PaymentCreate):
                 "status": "pending",
                 "created_at": "2023-01-01T12:00:00Z",
                 "metadata": {"promo_code": "SUMMER2023"}
-            }
-        }
-
+            },
+        },
+    )
 
 class PaymentNotification(BaseModel):
     """Схема для обработки вебхуков от платежной системы ЮKassa.

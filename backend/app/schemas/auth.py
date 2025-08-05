@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
-from backend.app.schemas.user import UserResponse
+from app.schemas.user import UserResponse
 
 
 class Token(BaseModel):
@@ -62,7 +62,7 @@ class TokenResponse(Token):
         example=["read", "write"]
     )
 
-    class Config:
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -74,7 +74,7 @@ class TokenResponse(Token):
                 "scopes": ["read", "write"]
             }
         }
-
+    )
 
 class AuthRequest(BaseModel):
     """Модель запроса аутентификации по email и паролю.
@@ -167,10 +167,11 @@ class RefreshTokenRequest(BaseModel):
         example="device_12345"
     )
 
-    class Config:
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                 "device_id": "user_device_123"
             }
         }
+    )

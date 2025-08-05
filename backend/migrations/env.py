@@ -2,8 +2,8 @@ import sys
 from os.path import abspath, dirname
 from pathlib import Path
 
-from backend.app.models.base import Base
-from backend.app.core.config import settings
+from app.models.base import Base
+from app.core.config import settings
 
 import asyncio
 from logging.config import fileConfig

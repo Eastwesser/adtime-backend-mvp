@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class NotificationType(str, Enum):
@@ -69,5 +69,7 @@ class NotificationResponse(NotificationBase):
     created_at: datetime
     read_at: Optional[datetime] = None
 
-    class Config:
+    model_config = ConfigDict(
         from_attributes = True
+    )
+    

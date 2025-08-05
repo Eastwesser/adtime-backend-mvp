@@ -13,16 +13,14 @@
     order (Order): Связанный заказ (обратная ссылка)
     sender (User): Пользователь-отправитель
 """
+from __future__ import annotations 
 import uuid
 from datetime import datetime
 from typing import List, Optional
 
+from app.models.base import Base
 from sqlalchemy import Text, ForeignKey, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from . import Order, User
-from .base import Base
-
 
 class ChatMessage(Base):
     """Модель сообщений в чате заказа"""

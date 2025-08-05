@@ -71,13 +71,14 @@ class OrderCreate(BaseModel):
         return self
 
     @field_validator('design_specs')
-    def validate_design_specs(self, v):
+    @classmethod
+    def validate_design_specs(cls, v: Dict) -> Dict:
+        """Валидация design_specs"""
         required_fields = {'size', 'material'}
         if not required_fields.issubset(v.keys()):
             raise ValueError(f"Design specs must contain {required_fields}")
         return v
-
-
+    
 class OrderStatus(str, Enum):
     """Перечисление статусов для API, дублирует CoreOrderStatus.
 
@@ -119,12 +120,7 @@ class OrderResponse(OrderBase):
         example="a1b2c3d4-5678-9012-3456-789012345678",
         description="Уникальный идентификатор заказа",
     )
-    # status: OrderStatus = Field(
-    #     ...,
-    #     example=OrderStatus.CREATED,
-    #     description="Текущий статус заказа",
-    # )
-    status: OrderStatus  # Используем напрямую
+    status: OrderStatus
     amount: float = Field(
         ...,
         example=1500.0,

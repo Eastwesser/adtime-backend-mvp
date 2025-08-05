@@ -1,13 +1,13 @@
-from backend.app.services.user import UserService
+from app.services.user import UserService
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import UUID4
 
-from backend.app.core.dependencies import (
+from app.core.dependencies import (
     CurrentUserDep,
     AdminDep,
     get_user_service
 )
-from backend.app.schemas.user import (
+from app.schemas.user import (
     UserResponse,
     UserUpdate
 )

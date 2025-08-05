@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from backend.app.models.subscription import Subscription
+from app.models.subscription import Subscription
 from .base import BaseRepository
 
 

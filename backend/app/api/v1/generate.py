@@ -3,12 +3,12 @@ from uuid import UUID
 from fastapi import APIRouter, status, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
-from backend.app.core.dependencies import (
+from app.core.dependencies import (
     GenerationServiceDep,
     CurrentUserDep,
     KandinskyAPIDep, RateLimiterDep
 )
-from backend.app.schemas.generation import (
+from app.schemas.generation import (
     GenerationResponse,
     GenerationStatusResponse
 )

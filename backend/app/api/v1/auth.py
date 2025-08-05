@@ -4,14 +4,14 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from backend.app.core.dependencies import get_auth_service
-from backend.app.core.security import create_access_token, create_refresh_token
-from backend.app.schemas.auth import (
+from app.core.dependencies import get_auth_service
+from app.core.security import create_access_token, create_refresh_token
+from app.schemas.auth import (
     TokenResponse,
     UserLoginResponse
 )
-from backend.app.schemas.user import UserCreate
-from backend.app.services.auth import AuthService
+from app.schemas.user import UserCreate
+from app.services.auth import AuthService
 
 router = APIRouter(tags=["Authentication"])
 

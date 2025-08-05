@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 from typing import Optional
 from uuid import UUID
 
-from backend.app.repositories.subscription import SubscriptionRepository
-from backend.app.schemas.subscription import SubscriptionResponse
+from app.repositories.subscription import SubscriptionRepository
+from app.schemas.subscription import SubscriptionResponse
 
 
 def _get_plan_details(plan: str) -> dict:

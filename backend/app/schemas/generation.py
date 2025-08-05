@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
 class GenerationStatus(str, Enum):
@@ -81,9 +81,9 @@ class GenerationResponse(GenerationCreate):
         description="ID пользователя",
     )
 
-    class Config:
+    model_config = ConfigDict(
         from_attributes = True
-
+    )
 
 class GenerationStatusResponse(BaseModel):
     """Модель ответа с текущим статусом генерации.

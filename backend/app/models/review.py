@@ -1,12 +1,11 @@
+from __future__ import annotations 
 import uuid
 from datetime import datetime
 from typing import Optional
 
+from app.models.base import Base
 from sqlalchemy import Integer, Text, ForeignKey, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from . import Order
-from .base import Base
 
 
 class Review(Base):

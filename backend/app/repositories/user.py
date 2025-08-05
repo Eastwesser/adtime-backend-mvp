@@ -6,7 +6,7 @@ from sqlalchemy import or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from backend.app.models.user import User
+from app.models.user import User
 from .base import BaseRepository
 
 

@@ -31,14 +31,15 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    environment:
-      PYTHONPATH: "/app:/backend"
+
     ports:
       - "8042:8042"
     env_file:
       - ./backend/.env
     volumes:
       - ./backend:/app
+    environment:
+      PYTHONPATH: "/app" 
     depends_on:
       postgres:
         condition: service_healthy

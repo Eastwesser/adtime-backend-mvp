@@ -6,6 +6,7 @@
 - Связи с пользователем
 - Статусы уведомлений
 """
+from __future__ import annotations 
 import uuid
 from datetime import datetime
 from typing import Optional, Dict
@@ -13,8 +14,7 @@ from typing import Optional, Dict
 from sqlalchemy import UUID, Enum, ForeignKey, JSON, Text, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.models.base import Base
-from backend.app.models.user import User
+from app.models.base import Base
 from ..schemas.notifications import NotificationType, NotificationStatus
 
 

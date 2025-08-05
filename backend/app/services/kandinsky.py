@@ -2,16 +2,16 @@ import asyncio
 import base64
 from asyncio import Timeout
 from contextlib import asynccontextmanager
-from typing import Optional, Literal
-
+from typing import Optional
+from enum import Enum
 import httpx
 from httpx import AsyncClient, Limits, AsyncHTTPTransport
 from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from backend.app.core.logger import setup_logger
+from app.core.logger import get_logger
 
-logger = setup_logger(__name__)
+logger = get_logger(__name__)
 
 
 class GenerationRequest(BaseModel):
@@ -29,7 +29,7 @@ class GenerationRequest(BaseModel):
     num_images: int = Field(1, ge=1, le=4)
 
 
-class GenerationStatus(str, Literal['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED']):
+class GenerationStatus(str, Enum):
     """Статусы генерации в Kandinsky API.
 
     Values:
@@ -38,18 +38,21 @@ class GenerationStatus(str, Literal['PENDING', 'PROCESSING', 'COMPLETED', 'FAILE
         COMPLETED: Успешно завершена
         FAILED: Завершена с ошибкой
     """
+    PENDING = 'PENDING'
+    PROCESSING = 'PROCESSING'
+    COMPLETED = 'COMPLETED'
+    FAILED = 'FAILED'
 
     @classmethod
     def from_kandinsky(cls, status: str) -> 'GenerationStatus':
         """Конвертирует статус Kandinsky API в наш enum."""
         status_map = {
-            'NEW': 'PENDING',
-            'PROCESSING': 'PROCESSING',
-            'DONE': 'COMPLETED',
-            'FAIL': 'FAILED'
+            'NEW': cls.PENDING,
+            'PROCESSING': cls.PROCESSING,
+            'DONE': cls.COMPLETED,
+            'FAIL': cls.FAILED
         }
-        return cls(status_map.get(status, 'FAILED'))
-
+        return status_map.get(status, cls.FAILED)
 
 class KandinskyAPI:
     """Клиент для работы с Kandinsky API (https://fusionbrain.ai/).

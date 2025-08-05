@@ -6,6 +6,8 @@
 - Связи с пользователем, генерацией, оплатой и производством
 - Статусы заказа
 """
+from __future__ import annotations 
+
 import uuid
 from datetime import datetime
 from typing import Optional, Dict, List
@@ -13,14 +15,7 @@ from typing import Optional, Dict, List
 from sqlalchemy import UUID, Enum, ForeignKey, JSON, Float, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.models.factory import Factory
-from backend.app.models.marketplace import MarketItem
-from backend.app.models.base import Base
-from backend.app.models.chat import ChatMessage
-from backend.app.models.generation import GenerationTask
-from backend.app.models.payment import Payment
-from backend.app.models.review import Review
-from backend.app.models.user import User
+from app.models.base import Base
 from ..core.order_status import OrderStatus as CoreOrderStatus
 
 
@@ -69,15 +64,6 @@ class Order(Base):
         nullable=True
     )
     status: Mapped[str] = mapped_column(
-        # Enum(
-        #     CoreOrderStatus.CREATED.value,
-        #     CoreOrderStatus.PAID.value,
-        #     CoreOrderStatus.PRODUCTION.value,
-        #     CoreOrderStatus.SHIPPED.value,
-        #     CoreOrderStatus.COMPLETED.value,
-        #     CoreOrderStatus.CANCELLED.value,
-        #     name="order_status"
-        # ),
         Enum(*[s.value for s in CoreOrderStatus], name="order_status"),
         default=CoreOrderStatus.CREATED.value,
         doc=f"Статус заказа. Допустимые значения: {list(CoreOrderStatus)}"
@@ -105,7 +91,9 @@ class Order(Base):
     )
 
     # Связи с производством
-    factory: Mapped[Optional["Factory"]] = relationship(back_populates="orders")
+    factory: Mapped[Optional["Factory"]] = relationship(
+        back_populates="orders"
+    )
     market_item: Mapped[Optional["MarketItem"]] = relationship(back_populates="orders")
     review: Mapped[Optional["Review"]] = relationship(back_populates="order")
     __table_args__ = (

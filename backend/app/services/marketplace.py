@@ -5,10 +5,10 @@ from uuid import UUID
 
 from fastapi import HTTPException
 
-from backend.app.core.storage import S3Storage
-from backend.app.repositories.marketplace import MarketplaceRepository
-from backend.app.repositories.user import UserRepository
-from backend.app.schemas.marketplace import MarketItem, MarketFilters, CartItem
+from app.core.storage import S3Storage
+from app.repositories.marketplace import MarketplaceRepository
+from app.repositories.user import UserRepository
+from app.schemas.marketplace import MarketItem, MarketFilters, CartItem
 
 
 class MarketplaceService:

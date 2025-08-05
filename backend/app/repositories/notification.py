@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.app.models.notifications import Notification
+from app.models.notifications import Notification
 from .base import BaseRepository
 
 

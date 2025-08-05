@@ -6,6 +6,7 @@
 - Связи с пользователем и заказом
 - Статусы выполнения генерации
 """
+from __future__ import annotations 
 import uuid
 from datetime import datetime
 from typing import Optional
@@ -13,10 +14,7 @@ from typing import Optional
 from sqlalchemy import String, DateTime, UUID as SQLUUID, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.models import Order
-from backend.app.models.base import Base
-from backend.app.models.user import User
-
+from app.models.base import Base
 
 class Generation(Base):
     def __init__(self):

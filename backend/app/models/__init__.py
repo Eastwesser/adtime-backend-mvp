@@ -7,12 +7,31 @@
 - Order - модель заказов
 - Subscription - модель подписок
 - User - модель пользователей
+
+Импорты должны быть в правильном порядке без циклических зависимостей.
 """
-from .factory import Factory
+# Сначала базовые модели без зависимостей
+from .base import Base
+from .user import User
 from .generation import Generation as GenerationTask
 from .marketplace import MarketItem
+from .payment import Payment
+from .review import Review
+from .chat import ChatMessage
+
+# Затем модели с зависимостями
+from .factory import Factory
 from .order import Order
 from .subscription import Subscription
-from .user import User
 
-__all__ = ["User", "GenerationTask", "Order", "Subscription", "MarketItem", "Factory"]
+__all__ = [
+    "User", 
+    "GenerationTask", 
+    "Order", 
+    "Subscription", 
+    "MarketItem", 
+    "Factory",
+    "Payment",
+    "Review",
+    "ChatMessage"
+]

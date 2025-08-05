@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserRole(str, Enum):
@@ -76,8 +76,8 @@ class UserResponse(UserBase):
         example="2023-01-01T00:00:00Z"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes = True,
         json_schema_extra = {
             "example": {
                 "id": "a1b2c3d4-5678-9012-3456-789012345678",
@@ -87,7 +87,7 @@ class UserResponse(UserBase):
                 "created_at": "2023-01-01T00:00:00Z"
             }
         }
-
+    )
 
 class UserUpdate(BaseModel):
     """Модель для обновления данных пользователя.
@@ -112,10 +112,11 @@ class UserUpdate(BaseModel):
         example="987654321"
     )
 
-    class Config:
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "email": "updated.email@example.com",
                 "telegram_id": "987654321"
             }
         }
+    )

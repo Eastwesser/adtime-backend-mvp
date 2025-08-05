@@ -12,13 +12,13 @@ from tenacity import stop_after_attempt, wait_exponential, retry
 
 from app.core.monitoring.monitoring import ORDER_STATUS_TRANSITIONS
 from app.models.factory import Factory
-from backend.app.core.logger import setup_logger
-from backend.app.models.order import OrderStatus, Order
-from backend.app.repositories.factory import FactoryRepository
-from backend.app.repositories.order import OrderRepository
-from backend.app.schemas.order import OrderResponse
+from app.core.logger import get_logger
+from app.models.order import OrderStatus, Order
+from app.repositories.factory import FactoryRepository
+from app.repositories.order import OrderRepository
+from app.schemas.order import OrderResponse
 
-logger = setup_logger(__name__)
+logger = get_logger(__name__)
 
 
 class ProductionService:

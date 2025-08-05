@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict, Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class HTTPError(BaseModel):
@@ -16,7 +16,7 @@ class HTTPError(BaseModel):
     code: str
     status_code: int
 
-    class Config:
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "detail": "Item not found",
@@ -24,7 +24,7 @@ class HTTPError(BaseModel):
                 "status_code": 404
             }
         }
-
+    )
 
 class ValidationError(HTTPError):
     """
@@ -35,7 +35,7 @@ class ValidationError(HTTPError):
     """
     errors: Optional[List[Dict[str, Any]]] = None
 
-    class Config:
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "detail": "Validation failed",
@@ -50,7 +50,7 @@ class ValidationError(HTTPError):
                 ]
             }
         }
-
+    )
 
 class ErrorResponse(BaseModel):
     """
@@ -73,7 +73,7 @@ class RateLimitError(HTTPError):
     """
     retry_after: int
 
-    class Config:
+    model_config = ConfigDict(
         json_schema_extra = {
             "example": {
                 "detail": "Too many requests",
@@ -82,3 +82,4 @@ class RateLimitError(HTTPError):
                 "retry_after": 30
             }
         }
+    )

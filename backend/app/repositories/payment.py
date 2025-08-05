@@ -6,7 +6,7 @@ from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from backend.app.models.payment import Payment
+from app.models.payment import Payment
 from .base import BaseRepository
 from ..models import Order
 

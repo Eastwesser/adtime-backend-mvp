@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 from jose import jwt, JWTError
 from pydantic import BaseModel
 
-from backend.app.core.config import settings
+from app.core.config import settings
 
 
 class TokenPayload(BaseModel):

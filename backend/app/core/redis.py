@@ -1,24 +1,14 @@
 from typing import Optional
-
 import redis.asyncio as redis
-
-from backend.app.core.config import settings
-from backend.app.core.logger import logger
-
+from app.core.config import settings
+from app.core.logger.logger import logger  # Direct import of the logger instance
 
 class RedisClient:
     """
-    Обертка для асинхронного клиента Redis с:
-    - Подключением при инициализации
-    - Автоматическим реконнектом
-    - Логированием ошибок
-
-    Пример использования:
-        redis = RedisClient()
-        await redis.set("key", "value")
+    Async Redis client wrapper with connection management.
     """
-
     _instance: Optional['RedisClient'] = None
+    client: redis.Redis
 
     def __new__(cls):
         if cls._instance is None:
@@ -27,17 +17,21 @@ class RedisClient:
         return cls._instance
 
     def _initialize(self):
-        self.client = redis.from_url(
-            str(settings.REDIS_URL),
-            socket_timeout=5,
-            socket_connect_timeout=5,
-            retry_on_timeout=True,
-            decode_responses=True
-        )
-        logger.info("Redis client initialized")
+        try:
+            self.client = redis.from_url(
+                str(settings.REDIS_URL),
+                socket_timeout=5,
+                socket_connect_timeout=5,
+                retry_on_timeout=True,
+                decode_responses=True
+            )
+            logger.info("Redis client initialized")
+        except Exception as e:
+            logger.error(f"Redis initialization failed: {e}")
+            raise
 
     async def ping(self) -> bool:
-        """Проверка подключения к Redis"""
+        """Check Redis connection"""
         try:
             return await self.client.ping()
         except Exception as e:
@@ -45,10 +39,9 @@ class RedisClient:
             return False
 
     async def close(self):
-        """Корректное закрытие подключения"""
+        """Properly close connection"""
         await self.client.close()
         logger.info("Redis connection closed")
 
-
-# Глобальный экземпляр
+# Global instance
 redis_client = RedisClient()

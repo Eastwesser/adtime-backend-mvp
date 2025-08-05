@@ -6,14 +6,14 @@
 - Лимиты генераций
 - Срок действия подписки
 """
+from __future__ import annotations 
 import uuid
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import UUID, Enum, ForeignKey, DateTime, Integer, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from backend.app.models.base import Base
-from backend.app.models.user import User
+from app.models.base import Base
 
 
 class Subscription(Base):

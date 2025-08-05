@@ -5,7 +5,7 @@ from sqlalchemy import desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from backend.app.models.chat import ChatMessage
+from app.models.chat import ChatMessage
 from .base import BaseRepository
 
 

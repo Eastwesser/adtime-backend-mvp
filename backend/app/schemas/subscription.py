@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SubscriptionPlan(str, Enum):
@@ -61,8 +61,8 @@ class SubscriptionResponse(SubscriptionCreate):
         example="a1b2c3d4-5678-9012-3456-789012345678"
     )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes = True,
         json_schema_extra = {
             "example": {
                 "id": "c3d4e5f6-7890-1234-5678-901234567890",
@@ -72,3 +72,5 @@ class SubscriptionResponse(SubscriptionCreate):
                 "user_id": "a1b2c3d4-5678-9012-3456-789012345678"
             }
         }
+    )
+    
