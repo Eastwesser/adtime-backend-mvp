@@ -36,6 +36,7 @@ class ValidationError(HTTPError):
     errors: Optional[List[Dict[str, Any]]] = None
 
     model_config = ConfigDict(
+        use_enum_values=True,
         json_schema_extra = {
             "example": {
                 "detail": "Validation failed",
@@ -74,6 +75,7 @@ class RateLimitError(HTTPError):
     retry_after: int
 
     model_config = ConfigDict(
+        use_enum_values=True,
         json_schema_extra = {
             "example": {
                 "detail": "Too many requests",

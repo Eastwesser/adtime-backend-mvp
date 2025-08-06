@@ -1,6 +1,7 @@
 # Entrypoint
 from contextlib import asynccontextmanager
-
+from enum import Enum
+import json
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -18,6 +19,13 @@ async def lifespan(app: FastAPI):
     await init_db()  # Initialize database tables
     yield
     # Shutdown logic would go here
+
+
+class EnumEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Enum):
+            return obj.value
+        return super().default(obj)
 
 
 app = FastAPI(
@@ -82,6 +90,104 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    from enum import Enum, EnumType
+    from pydantic import BaseModel
+    from typing import Any
+    import json
+
+    def serialize_enums(obj: Any) -> Any:
+        """Recursively serialize Enums and Enum types in the schema"""
+        if isinstance(obj, (Enum, EnumType)):
+            if isinstance(obj, Enum):
+                return obj.value
+            return str(obj)  # Handle EnumType case
+        elif isinstance(obj, dict):
+            return {k: serialize_enums(v) for k, v in obj.items()}
+        elif isinstance(obj, (list, tuple)):
+            return [serialize_enums(v) for v in obj]
+        elif isinstance(obj, BaseModel):
+            return serialize_enums(obj.model_dump())
+        elif hasattr(obj, '__dict__'):
+            return serialize_enums(obj.__dict__)
+        return obj
+
+    try:
+        # Generate the basic schema
+        openapi_schema = get_openapi(
+            title=app.title,
+            version=app.version,
+            description=app.description,
+            routes=app.routes,
+            tags=app.openapi_tags,
+        )
+
+        # Clean the schema by serializing any Enums
+        openapi_schema = serialize_enums(openapi_schema)
+
+        # Ensure components exist
+        if "components" not in openapi_schema:
+            openapi_schema["components"] = {}
+        if "schemas" not in openapi_schema["components"]:
+            openapi_schema["components"]["schemas"] = {}
+
+        # Add error schemas
+        from app.schemas.errors import HTTPError, ValidationError
+        error_schemas = {
+            "HTTPError": serialize_enums(HTTPError.model_json_schema()),
+            "ValidationError": serialize_enums(ValidationError.model_json_schema())
+        }
+        openapi_schema["components"]["schemas"].update(error_schemas)
+
+        app.openapi_schema = openapi_schema
+        return openapi_schema
+
+    except Exception as e:
+        print(f"Error generating OpenAPI schema: {e}")
+        raise
+
+app.openapi = custom_openapi
+
+
+def debug_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    try:
+        # Generate the basic schema
+        openapi_schema = get_openapi(
+            title=app.title,
+            version=app.version,
+            description=app.description,
+            routes=app.routes,
+            tags=app.openapi_tags,
+        )
+
+        # Convert all enums to their values
+        def clean_schema(schema):
+            if isinstance(schema, dict):
+                return {k: clean_schema(v) for k, v in schema.items()}
+            elif isinstance(schema, list):
+                return [clean_schema(v) for v in schema]
+            elif isinstance(schema, Enum):
+                return schema.value
+            elif hasattr(schema, '__dict__'):
+                return clean_schema(schema.__dict__)
+            return schema
+
+        openapi_schema = clean_schema(openapi_schema)
+        app.openapi_schema = openapi_schema
+        return openapi_schema
+    except Exception as e:
+        print(f"Error generating OpenAPI schema: {e}")
+        raise
+
+# Uncomment to debug
+app.openapi = debug_openapi
+
 app.include_router(api_router, prefix="/api/v1")
 
 
@@ -140,41 +246,3 @@ async def detailed_health_check():
         "redis": "connected"
     }
 
-
-def custom_openapi():
-    if app.openapi_schema:
-        return app.openapi_schema
-
-    openapi_schema = get_openapi(
-        title=app.title,
-        version=app.version,
-        description=app.description,
-        routes=app.routes,
-        tags=app.openapi_tags,
-    )
-
-    # Добавляем схемы ошибок
-    openapi_schema["components"]["schemas"] = {
-        "HTTPError": HTTPError.schema(),
-        "ValidationError": ValidationError.schema(),
-    }
-
-    # Добавляем примеры ответов для ошибок
-    for path in openapi_schema["paths"].values():
-        for method in path.values():
-            if "responses" in method:
-                if "400" in method["responses"]:
-                    method["responses"]["400"]["content"] = {
-                        "application/json": {
-                            "schema": {"$ref": "#/components/schemas/HTTPError"}
-                        }
-                    }
-                if "422" in method["responses"]:
-                    method["responses"]["422"]["content"] = {
-                        "application/json": {
-                            "schema": {"$ref": "#/components/schemas/ValidationError"}
-                        }
-                    }
-
-    app.openapi_schema = openapi_schema
-    return openapi_schema

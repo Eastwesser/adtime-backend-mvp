@@ -70,6 +70,7 @@ class NotificationResponse(NotificationBase):
     read_at: Optional[datetime] = None
 
     model_config = ConfigDict(
+        use_enum_values=True,
         from_attributes = True
     )
     

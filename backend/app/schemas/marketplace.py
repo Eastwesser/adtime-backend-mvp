@@ -54,6 +54,7 @@ class MarketItem(BaseModel):
     )
 
     model_config = ConfigDict(
+        use_enum_values=True,
         json_schema_extra = {
             "example": {
                 "id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
@@ -109,6 +110,7 @@ class CartItemAdd(BaseModel):
     )
 
     model_config = ConfigDict(
+        use_enum_values=True,
         json_schema_extra = {
             "example": {
                 "item_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
@@ -150,6 +152,7 @@ class DirectOrderResponse(BaseModel):
     )
 
     model_config = ConfigDict(
+        use_enum_values=True,
         json_schema_extra = {
             "example": {
                 "order_id": "b2c3d4e5-f6g7-8901-h2i3-j4k5l6m7n8o9",

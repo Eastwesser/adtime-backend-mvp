@@ -1,9 +1,12 @@
 from enum import Enum
 from hashlib import new
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 from alembic.command import current
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+
+from pydantic import GetCoreSchemaHandler
+from pydantic_core import core_schema
 
 
 class OrderStatus(str, Enum):
@@ -42,54 +45,6 @@ class OrderStatus(str, Enum):
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 
-    # @classmethod
-    # def get_next_statuses(cls, current_status: Union['OrderStatus', str]) -> List['OrderStatus']:
-    #     """Возвращает допустимые следующие статусы для текущего состояния заказа.
-    #
-    #     Метод реализует конечный автомат (state machine) для управления жизненным циклом заказа.
-    #     Определяет, в какие статусы можно перевести заказ из текущего состояния.
-    #
-    #     Args:
-    #         current_status: Текущий статус заказа (может быть строкой или OrderStatus)
-    #
-    #     Returns:
-    #         Список допустимых следующих статусов (как объектов OrderStatus)
-    #
-    #     Raises:
-    #         ValueError: Если передан неизвестный статус
-    #
-    #     Примеры:
-    #         >>> OrderStatus.get_next_statuses(OrderStatus.CREATED)
-    #         [<OrderStatus.PAID: 'paid'>, <OrderStatus.CANCELLED: 'cancelled'>]
-    #
-    #         >>> OrderStatus.get_next_statuses("created")
-    #         [<OrderStatus.PAID: 'paid'>, <OrderStatus.CANCELLED: 'cancelled'>]
-    #
-    #     Бизнес-правила переходов:
-    #         created → paid
-    #         created → cancelled
-    #         paid → production
-    #         paid → cancelled
-    #         production → shipped
-    #         production → cancelled
-    #         shipped → completed
-    #     """
-    #     # Конвертируем строковый статус в Enum при необходимости
-    #     if isinstance(current_status, str):
-    #         try:
-    #             current_status = cls(current_status)
-    #         except ValueError as e:
-    #             raise ValueError(f"Unknown status: {current_status}") from e
-    #
-    #     workflow: Dict['OrderStatus', List['OrderStatus']] = {
-    #         cls.CREATED: [cls.PAID, cls.CANCELLED],
-    #         cls.PAID: [cls.PRODUCTION, cls.CANCELLED],
-    #         cls.PRODUCTION: [cls.SHIPPED, cls.CANCELLED],
-    #         cls.SHIPPED: [cls.COMPLETED],
-    #     }
-    #
-    #     return workflow.get(current_status, [])
-
     def get_display_name(self, lang: str = "en") -> str:
         """Локализованное название статуса"""
         names = {
@@ -122,32 +77,6 @@ class OrderStatus(str, Enum):
             cls.SHIPPED: [cls.COMPLETED],
         }
 
-    # @classmethod
-    # def is_valid_transition(cls, from_status: Union['OrderStatus', str],
-    #                         to_status: Union['OrderStatus', str]) -> bool:
-    #     """Проверяет, допустим ли переход между статусами.
-    #
-    #     Args:
-    #         from_status: Исходный статус
-    #         to_status: Целевой статус
-    #
-    #     Returns:
-    #         True если переход допустим, иначе False
-    #
-    #     Пример:
-    #         >>> OrderStatus.is_valid_transition("created", "paid")
-    #         True
-    #         >>> OrderStatus.is_valid_transition("created", "completed")
-    #         False
-    #     """
-    #     try:
-    #         if isinstance(from_status, str):
-    #             from_status = cls(from_status)
-    #         if isinstance(to_status, str):
-    #             to_status = cls(to_status)
-    #         return to_status in cls.get_next_statuses(from_status)
-    #     except ValueError:
-    #         return False
     @classmethod
     def is_valid(cls, value: str) -> bool:
         try:
@@ -181,7 +110,8 @@ class OrderStatus(str, Enum):
             )
 
     @classmethod
-    def get_transitions(cls) -> Dict['OrderStatus', List['OrderStatus']]:
+    def get_transitions(cls) -> dict['OrderStatus', list['OrderStatus']]:
+        """Returns allowed status transitions"""
         return {
             cls.CREATED: [cls.PAID, cls.CANCELLED],
             cls.PAID: [cls.PRODUCTION, cls.CANCELLED],
@@ -208,6 +138,31 @@ class OrderStatus(str, Enum):
 
 class StatusTransition(BaseModel):
     """Модель для описания перехода статуса"""
+    
     from_status: OrderStatus
     to_status: OrderStatus
     reason: Optional[str] = None
+    
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_schema_extra={
+            "example": {
+                "from_status": "created",
+                "to_status": "paid",
+                "reason": "Customer made payment"
+            }
+        }
+    )
+
+    
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls,
+        source_type: Any,
+        handler: GetCoreSchemaHandler,
+    ) -> core_schema.CoreSchema:
+        return core_schema.no_info_after_validator_function(
+            cls,
+            core_schema.str_schema(),
+            serialization=core_schema.to_string_ser_schema(),
+        )

@@ -1,11 +1,11 @@
 import uuid
 from datetime import datetime
-from enum import Enum
+
 from typing import Optional, Dict, List, Literal
 
 from pydantic import BaseModel, Field, ConfigDict, model_validator, field_validator
 
-from ..core.order_status import OrderStatus as CoreOrderStatus
+from ..core.order_status import OrderStatus 
 
 
 class OrderCreate(BaseModel):
@@ -48,6 +48,7 @@ class OrderCreate(BaseModel):
     )
 
     model_config = ConfigDict(
+        use_enum_values=True,
         json_schema_extra={
             "example": {
                 "generation_id": "a1b2c3d4-5678-9012-3456-789012345678",
@@ -79,22 +80,6 @@ class OrderCreate(BaseModel):
             raise ValueError(f"Design specs must contain {required_fields}")
         return v
     
-class OrderStatus(str, Enum):
-    """Перечисление статусов для API, дублирует CoreOrderStatus.
-
-    Необходимо для валидации входных/выходных данных API.
-    Всегда должен синхронизироваться с:
-    - app.core.order_status.OrderStatus
-    - models.order.Order.status enum
-    """
-    CREATED = CoreOrderStatus.CREATED
-    PAID = CoreOrderStatus.PAID
-    PRODUCTION = CoreOrderStatus.PRODUCTION
-    SHIPPED = CoreOrderStatus.SHIPPED
-    COMPLETED = CoreOrderStatus.COMPLETED
-    CANCELLED = CoreOrderStatus.CANCELLED
-
-
 class OrderBase(BaseModel):
     """Базовая схема для создания/обновления заказа."""
     generation_id: Optional[uuid.UUID] = Field(
@@ -115,12 +100,8 @@ class OrderBase(BaseModel):
 
 class OrderResponse(OrderBase):
     """Схема для возврата данных о заказе через API."""
-    id: uuid.UUID = Field(
-        ...,
-        example="a1b2c3d4-5678-9012-3456-789012345678",
-        description="Уникальный идентификатор заказа",
-    )
-    status: OrderStatus
+    id: uuid.UUID = Field(...)
+    status: OrderStatus = Field(...) 
     amount: float = Field(
         ...,
         example=1500.0,
@@ -149,10 +130,10 @@ class OrderResponse(OrderBase):
 
     model_config = ConfigDict(
         from_attributes=True,
+        use_enum_values=True,
         json_schema_extra={
             "example": {
-                "id": "a1b2c3d4-5678-9012-3456-789012345678",
-                "status": "created",
+                "status": "created", 
                 "amount": 1500.0,
                 "created_at": "2023-01-01T12:00:00Z",
                 "generation_id": "c3d4e5f6-7890-1234-5678-901234567890",
@@ -170,6 +151,7 @@ class OrderResponse(OrderBase):
 
 class OrderUpdate(BaseModel):
     """Схема для обновления заказа"""
+
     status: Optional[OrderStatus] = Field(
         None,
         description="Новый статус заказа"
@@ -236,6 +218,7 @@ class ChatMessageSchema(BaseModel):
 
     model_config = ConfigDict(
         from_attributes=True,
+        use_enum_values=True,
         json_schema_extra={
             "example": {
                 "id": "d3e4f5g6-7890-1234-5678-901234567890",
@@ -265,6 +248,7 @@ class OrderWithMessages(OrderResponse):
     )
 
     model_config = ConfigDict(
+        use_enum_values=True,
         json_schema_extra={
             "example": {
                 "id": "a1b2c3d4-5678-9012-3456-789012345678",

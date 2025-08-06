@@ -26,6 +26,7 @@ class PaymentService:
     - Создание платежей
     - Обработка вебхуков
     - Проверка статусов
+    - Fiscalisation receipt
     """
 
     def __init__(self, repository: PaymentRepository):

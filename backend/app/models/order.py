@@ -16,7 +16,7 @@ from sqlalchemy import UUID, Enum, ForeignKey, JSON, Float, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
-from ..core.order_status import OrderStatus as CoreOrderStatus
+from ..core.order_status import OrderStatus 
 
 
 class Order(Base):
@@ -63,11 +63,14 @@ class Order(Base):
         ForeignKey("generations.id"),
         nullable=True
     )
-    status: Mapped[str] = mapped_column(
-        Enum(*[s.value for s in CoreOrderStatus], name="order_status"),
-        default=CoreOrderStatus.CREATED.value,
-        doc=f"Статус заказа. Допустимые значения: {list(CoreOrderStatus)}"
+
+
+    status: Mapped[OrderStatus] = mapped_column(
+        Enum(OrderStatus, name="order_status"),
+        default=OrderStatus.CREATED,
+        doc=f"Статус заказа. Допустимые значения: {list(OrderStatus)}"
     )
+
     amount: Mapped[float] = mapped_column(Float, nullable=False)
     design_specs: Mapped[Dict] = mapped_column(JSON, nullable=False)  # Техническое задание
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
@@ -106,13 +109,3 @@ class Order(Base):
             name="check_required_specs_fields"
         )
     )
-
-
-class OrderStatus(str, Enum):
-    """Статусы заказов в системе."""
-    CREATED = "created"
-    PAID = "paid"
-    PRODUCTION = "production"
-    SHIPPED = "shipped"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"

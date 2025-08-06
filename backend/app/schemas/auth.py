@@ -63,6 +63,7 @@ class TokenResponse(Token):
     )
 
     model_config = ConfigDict(
+        use_enum_values=True,
         json_schema_extra = {
             "example": {
                 "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -168,6 +169,7 @@ class RefreshTokenRequest(BaseModel):
     )
 
     model_config = ConfigDict(
+        use_enum_values=True,
         json_schema_extra = {
             "example": {
                 "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",

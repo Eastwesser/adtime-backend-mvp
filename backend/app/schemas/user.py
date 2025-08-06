@@ -77,6 +77,7 @@ class UserResponse(UserBase):
     )
 
     model_config = ConfigDict(
+        use_enum_values=True,
         from_attributes = True,
         json_schema_extra = {
             "example": {
@@ -113,6 +114,7 @@ class UserUpdate(BaseModel):
     )
 
     model_config = ConfigDict(
+        use_enum_values=True,
         json_schema_extra = {
             "example": {
                 "email": "updated.email@example.com",
