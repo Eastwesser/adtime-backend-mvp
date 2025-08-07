@@ -206,3 +206,80 @@ tree -L 5
 
     Dockerfile - образ backend
     docker-compose.yml - все сервисы
+
+## THE ENUM PROBLEM:
+
+### 1. Find all Enum class definitions
+```bash
+grep -r "class.*Enum" app/
+```
+
+### 2. Find all enum imports
+```bash
+grep -r "from enum import" app/
+grep -r "import enum" app/
+```
+
+### 3. Find all Pydantic models using enums
+```bash
+grep -r ":.*Enum" app/ | grep -v "OrderStatus"
+grep -r "=.*Enum" app/ | grep -v "OrderStatus"
+```
+
+### 4. Find custom JSON encoders
+```bash
+grep -r "json_encoders" app/
+grep -r "json_encoder" app/
+grep -r "JSONEncoder" app/
+```
+
+### 5. Find schema modifiers
+```bash
+grep -r "openapi_schema" app/
+grep -r "get_openapi" app/
+grep -r "schema_extra" app/
+grep -r "ConfigDict" app/
+```
+
+### 6. Find route response models
+```bash
+grep -r "response_model" app/
+```
+
+### 7. Find all enum usage in models
+```bash
+grep -r "Enum" app/core/ app/api/v1/ | grep -i "model"
+```
+
+### 8. Find any remaining enum serialization
+```bash
+grep -r "\.value" app/ | grep "Enum"
+```
+
+## Tips for effective searching:
+
+
+### Use -n flag to show line numbers:
+```bash
+grep -rn "Enum" app/
+```
+
+### Search specific directories:
+```bash
+grep -r "Enum" app/core/ app/api/v1/schemas/
+```
+
+### Exclude specific files:
+```bash
+grep -r "Enum" app/ --exclude="order_status.py"
+```
+
+### Case insensitive search:
+```bash
+grep -ri "enum" app/
+```
+
+### Count occurrences:
+```bash
+grep -r "Enum" app/ | wc -l
+```

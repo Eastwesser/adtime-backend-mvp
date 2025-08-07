@@ -1,28 +1,19 @@
 import uuid
 from datetime import datetime
-
 from typing import Optional, Dict, List, Literal
 
 from pydantic import BaseModel, Field, ConfigDict, model_validator, field_validator
 
-from ..core.order_status import OrderStatus 
-
+# Define status values as Literal type
+OrderStatusValues = Literal["created", "paid", "production", "shipped", "completed", "cancelled"]
 
 class OrderCreate(BaseModel):
-    """Схема для создания нового заказа.
-
-    Используется при:
-    - Создании заказа через API
-    - Инициализации платежа
-    - Передаче в сервисный слой
-    """
+    """Схема для создания нового заказа."""
     generation_id: Optional[uuid.UUID] = Field(
         None,
         example="a1b2c3d4-5678-9012-3456-789012345678",
         description="ID связанной генерации изображения (если требуется генерация)",
-        json_schema_extra={
-            "nullable": True
-        }
+        json_schema_extra={"nullable": True}
     )
     design_specs: Dict = Field(
         ...,
@@ -32,9 +23,7 @@ class OrderCreate(BaseModel):
             "color_profile": "CMYK"
         },
         description="Технические параметры заказа в JSON-формате",
-        json_schema_extra={
-            "minProperties": 1
-        }
+        json_schema_extra={"minProperties": 1}
     )
     factory_id: Optional[uuid.UUID] = Field(
         None,
@@ -48,7 +37,6 @@ class OrderCreate(BaseModel):
     )
 
     model_config = ConfigDict(
-        use_enum_values=True,
         json_schema_extra={
             "example": {
                 "generation_id": "a1b2c3d4-5678-9012-3456-789012345678",
@@ -79,7 +67,7 @@ class OrderCreate(BaseModel):
         if not required_fields.issubset(v.keys()):
             raise ValueError(f"Design specs must contain {required_fields}")
         return v
-    
+
 class OrderBase(BaseModel):
     """Базовая схема для создания/обновления заказа."""
     generation_id: Optional[uuid.UUID] = Field(
@@ -90,18 +78,17 @@ class OrderBase(BaseModel):
     design_specs: Dict = Field(
         ...,
         example={
-            "size": "A4",
+            "size": "A4", 
             "material": "premium_paper",
             "color_profile": "CMYK"
         },
         description="Технические параметры заказа в JSON-формате",
     )
 
-
 class OrderResponse(OrderBase):
     """Схема для возврата данных о заказе через API."""
     id: uuid.UUID = Field(...)
-    status: OrderStatus = Field(...) 
+    status: OrderStatusValues = Field(...)
     amount: float = Field(
         ...,
         example=1500.0,
@@ -130,10 +117,9 @@ class OrderResponse(OrderBase):
 
     model_config = ConfigDict(
         from_attributes=True,
-        use_enum_values=True,
         json_schema_extra={
             "example": {
-                "status": "created", 
+                "status": "created",
                 "amount": 1500.0,
                 "created_at": "2023-01-01T12:00:00Z",
                 "generation_id": "c3d4e5f6-7890-1234-5678-901234567890",
@@ -148,11 +134,9 @@ class OrderResponse(OrderBase):
         }
     )
 
-
 class OrderUpdate(BaseModel):
     """Схема для обновления заказа"""
-
-    status: Optional[OrderStatus] = Field(
+    status: Optional[OrderStatusValues] = Field(
         None,
         description="Новый статус заказа"
     )
@@ -167,47 +151,42 @@ class OrderUpdate(BaseModel):
             raise ValueError("At least one field must be provided for update")
         return self
 
-
 class ChatMessageSchema(BaseModel):
-    """Схема сообщения в чате заказа.
-
-    Используется для отображения истории переписки по заказу.
-    """
+    """Схема сообщения в чате заказа."""
     id: uuid.UUID = Field(
-        default=...,
+        ...,
         example="d3e4f5g6-7890-1234-5678-901234567890",
         description="Уникальный идентификатор сообщения"
     )
     order_id: uuid.UUID = Field(
-        default=...,
+        ...,
         example="a1b2c3d4-5678-9012-3456-789012345678",
         description="ID связанного заказа"
     )
     sender_id: uuid.UUID = Field(
-        default=...,
+        ...,
         example="b2c3d4e5-6789-0123-4567-890123456789",
         description="ID отправителя (пользователя)"
     )
     sender_role: Literal["customer", "designer", "support"] = Field(
-        default=...,
+        ...,
         example="customer",
         description="Роль отправителя"
     )
     message: str = Field(
-        default=...,
+        ...,
         example="Когда будет готов мой заказ?",
         description="Текст сообщения",
         min_length=1,
         max_length=2000
     )
     attachments: List[str] = Field(
-        default=...,
         default_factory=list,
         example=["https://storage.example.com/files/123.pdf"],
         description="Ссылки на прикрепленные файлы"
     )
     created_at: datetime = Field(
-        default=...,
+        ...,
         example="2023-01-01T12:00:00Z",
         description="Дата и время отправки (UTC)"
     )
@@ -218,7 +197,6 @@ class ChatMessageSchema(BaseModel):
 
     model_config = ConfigDict(
         from_attributes=True,
-        use_enum_values=True,
         json_schema_extra={
             "example": {
                 "id": "d3e4f5g6-7890-1234-5678-901234567890",
@@ -233,22 +211,14 @@ class ChatMessageSchema(BaseModel):
         }
     )
 
-
 class OrderWithMessages(OrderResponse):
-    """Расширенная схема заказа с историей сообщений чата.
-
-    Содержит:
-    - Все поля OrderResponse
-    - Полную историю переписки по заказу
-    - Информацию о прочтении сообщений
-    """
+    """Расширенная схема заказа с историей сообщений чата."""
     messages: List[ChatMessageSchema] = Field(
         default_factory=list,
-        description="История сообщений по заказу (отсортированы по дате создания)"
+        description="История сообщений по заказу"
     )
 
     model_config = ConfigDict(
-        use_enum_values=True,
         json_schema_extra={
             "example": {
                 "id": "a1b2c3d4-5678-9012-3456-789012345678",
@@ -265,18 +235,9 @@ class OrderWithMessages(OrderResponse):
                         "attachments": [],
                         "created_at": "2023-01-02T10:00:00Z",
                         "is_read": True
-                    },
-                    {
-                        "id": "e4f5g6h7-8901-2345-6789-012345678901",
-                        "order_id": "a1b2c3d4-5678-9012-3456-789012345678",
-                        "sender_id": "f3e4d5c6-7890-1234-5678-901234567890",
-                        "sender_role": "support",
-                        "message": "Заказ будет готов к 15 января",
-                        "attachments": ["https://storage.example.com/files/progress.pdf"],
-                        "created_at": "2023-01-02T11:30:00Z",
-                        "is_read": True
                     }
                 ]
             }
         }
     )
+    

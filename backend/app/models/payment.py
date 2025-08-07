@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
+from app.models.order import Order
 from sqlalchemy import UUID, String, Enum, ForeignKey, JSON, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

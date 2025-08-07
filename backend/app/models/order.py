@@ -12,11 +12,18 @@ import uuid
 from datetime import datetime
 from typing import Optional, Dict, List
 
+from app.models.chat import ChatMessage
+from app.models.factory import Factory
+from app.models.generation import GenerationTask
+from app.models.marketplace import MarketItem
+from app.models.payment import Payment
+from app.models.review import Review
+from app.models.user import User
 from sqlalchemy import UUID, Enum, ForeignKey, JSON, Float, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
-from ..core.order_status import OrderStatus 
+from ..core.order_status import OrderStatusHelper
 
 
 class Order(Base):
@@ -65,11 +72,13 @@ class Order(Base):
     )
 
 
-    status: Mapped[OrderStatus] = mapped_column(
-        Enum(OrderStatus, name="order_status"),
-        default=OrderStatus.CREATED,
-        doc=f"Статус заказа. Допустимые значения: {list(OrderStatus)}"
+    status: Mapped[OrderStatusHelper] = mapped_column(
+        Enum(OrderStatusHelper, name="order_status"),
+        default=OrderStatusHelper.CREATED,
+        doc=f"Статус заказа. Допустимые значения: {list(OrderStatusHelper)}"
     )
+
+    
 
     amount: Mapped[float] = mapped_column(Float, nullable=False)
     design_specs: Mapped[Dict] = mapped_column(JSON, nullable=False)  # Техническое задание

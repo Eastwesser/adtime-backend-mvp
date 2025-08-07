@@ -10,6 +10,10 @@ from __future__ import annotations
 import uuid
 from typing import List, Optional
 
+from app.models.generation import GenerationTask
+from app.models.notifications import Notification
+from app.models.order import Order
+from app.models.subscription import Subscription
 from sqlalchemy import UUID, String, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
