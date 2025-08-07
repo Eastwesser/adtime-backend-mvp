@@ -26,7 +26,9 @@ Run:
 ```bash
 docker-compose down -v && docker-compose up --build
 
-# OR
+# Or with full clear before run
+docker-compose down --remove-orphans -v
+docker system prune -f
 docker-compose down
 docker-compose build --no-cache backend
 docker-compose up
