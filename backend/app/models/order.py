@@ -1,10 +1,5 @@
 """
-Модель заказа на производство.
-
-Содержит:
-- Основные данные заказа
-- Связи с пользователем, генерацией, оплатой и производством
-- Статусы заказа
+Модель заказа на производство (updated to use strings instead of enums)
 """
 from __future__ import annotations 
 
@@ -19,40 +14,13 @@ from app.models.marketplace import MarketItem
 from app.models.payment import Payment
 from app.models.review import Review
 from app.models.user import User
-from sqlalchemy import UUID, Enum, ForeignKey, JSON, Float, CheckConstraint
+from sqlalchemy import UUID, String, ForeignKey, JSON, Float, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
-from ..core.order_status import OrderStatusHelper
-
 
 class Order(Base):
-    """Основная модель заказа в базе данных.
-
-    Соответствует таблице 'orders' и содержит:
-    - Все основные поля заказа
-    - Связи с другими моделями через ForeignKey
-    - SQLAlchemy Enum для статусов (должен дублировать значения из OrderStatus)
-
-    Атрибуты:
-        id: Уникальный идентификатор заказа
-        user_id: ID пользователя, создавшего заказ
-        generation_id: ID связанной генерации (если есть)
-        status: Текущий статус заказа из OrderStatus
-        amount: Общая сумма заказа в рублях
-        design_specs: Техническое задание в формате JSON
-        production_deadline: Крайний срок производства
-        production_errors: Ошибки при производстве
-
-    Связи:
-        user: Пользователь, создавший заказ
-        generation: Связанная генерация изображения
-        payment: Данные об оплате
-        factory: Производственное предприятие
-        market_item: Товар из маркетплейса (если заказ на готовый товар)
-        messages: История сообщений в чате заказа
-        review: Отзыв о выполненном заказе
-    """
+    """Основная модель заказа в базе данных (использует строки для статусов)."""
     __tablename__ = "orders"
 
     # Основные поля
@@ -71,17 +39,14 @@ class Order(Base):
         nullable=True
     )
 
-
-    status: Mapped[OrderStatusHelper] = mapped_column(
-        Enum(OrderStatusHelper, name="order_status"),
-        default=OrderStatusHelper.CREATED,
-        doc=f"Статус заказа. Допустимые значения: {list(OrderStatusHelper)}"
+    status: Mapped[str] = mapped_column(
+        String(50),  # Increased length for potential future statuses
+        default="created",
+        doc="Статус заказа. Допустимые значения: created, paid, production, shipped, completed, cancelled"
     )
 
-    
-
     amount: Mapped[float] = mapped_column(Float, nullable=False)
-    design_specs: Mapped[Dict] = mapped_column(JSON, nullable=False)  # Техническое задание
+    design_specs: Mapped[Dict] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     production_deadline: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     production_errors: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)
@@ -103,12 +68,15 @@ class Order(Base):
     )
 
     # Связи с производством
-    factory: Mapped[Optional["Factory"]] = relationship(
-        back_populates="orders"
-    )
+    factory: Mapped[Optional["Factory"]] = relationship(back_populates="orders")
     market_item: Mapped[Optional["MarketItem"]] = relationship(back_populates="orders")
     review: Mapped[Optional["Review"]] = relationship(back_populates="order")
+
     __table_args__ = (
+        CheckConstraint(
+            "status IN ('created', 'paid', 'production', 'shipped', 'completed', 'cancelled')",
+            name="check_valid_order_status"
+        ),
         CheckConstraint(
             "jsonb_typeof(design_specs) = 'object'",
             name="check_design_specs_is_object"
@@ -118,3 +86,4 @@ class Order(Base):
             name="check_required_specs_fields"
         )
     )
+    
