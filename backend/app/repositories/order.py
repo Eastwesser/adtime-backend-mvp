@@ -76,13 +76,11 @@ class OrderRepository(BaseRepository[Order]):
         result = await self.session.execute(query)
         return result.scalars().all()
 
-    @staticmethod
     async def get_by_status(
             self,
-            session: AsyncSession,
             status: str
     ) -> Sequence[Row[Any] | RowMapping | Any]:
-        result = await session.execute(
+        result = await self.session.execute(
             select(Order).where(Order.status == status)
         )
         return result.scalars().all()

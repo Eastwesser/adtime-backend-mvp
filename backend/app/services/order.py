@@ -16,8 +16,8 @@ from app.repositories.order import OrderRepository
 from app.schemas.order import OrderCreate, OrderResponse, ChatMessageSchema, OrderUpdate
 from app.services.payment import PaymentService, logger
 from ..core.monitoring.monitoring import ORDER_METRICS
-from ..core.order_status import OrderStatus
-from ..core.order_status import OrderStatus as CoreOrderStatus
+from app.core.order_status import StatusValues as OrderStatusValues
+from app.core.order_status import OrderStatusHelper
 from ..models import Order
 
 
@@ -255,7 +255,7 @@ class OrderService:
         query = select(Order).where(Order.user_id == user_id)
 
         if status:
-            if status not in CoreOrderStatus:
+            if status not in OrderStatusValues.__args__:
                 raise ValueError(f"Invalid status: {status}")
             query = query.where(Order.status == status)
 
@@ -270,9 +270,9 @@ class OrderService:
         return order
 
     async def assign_to_factory(
-            self,
-            order_id: UUID,
-            factory_id: Optional[UUID] = None
+            self, 
+            order_id: UUID, 
+            factory_id: Optional[UUID] = None,
     ) -> Order | None:
         """
         Назначает заказ на производство (фабрику).
@@ -292,26 +292,17 @@ class OrderService:
             order = await self.get_order(order_id)
 
             # Проверка статуса заказа
-            if order.status != CoreOrderStatus.PAID:
+            if order.status != "paid":
                 raise ValueError("Only PAID orders can be assigned to factory")
-
-            # Если фабрика не указана - находим подходящую
-            if not factory_id:
-                # Здесь должна быть логика автоматического выбора фабрики
-                # Например, через ProductionService
-                factory_id = uuid.uuid4()  # Заглушка
-
-            # Обновляем заказ
+            
             updated_order = await self.order_repo.update(
                 order_id,
                 {
                     "factory_id": factory_id,
-                    "status": CoreOrderStatus.PRODUCTION,
-                    "production_deadline": datetime.now() + timedelta(days=7)  # +7 дней на производство
+                    "status": "production",
+                    "production_deadline": datetime.now() + timedelta(days=7)
                 }
             )
-
-            # Здесь можно добавить вызов API фабрики для уведомления
 
             return updated_order
 
@@ -340,16 +331,16 @@ class OrderService:
             if user_id and order.user_id != user_id:
                 raise PermissionError("User can only complete own orders")
 
-            if order.status != CoreOrderStatus.SHIPPED:
+            if order.status != "shipped":
                 raise ValueError("Only SHIPPED orders can be completed")
-
+            
             updated_order = await self.order_repo.update(
                 order_id,
                 {
-                    "status": CoreOrderStatus.COMPLETED,
+                    "status": "completed",
                     "completed_at": datetime.now()
                 }
-            )
+    )
 
             return updated_order
 
@@ -380,26 +371,26 @@ class OrderService:
         async with self.session.begin():
             order = await self.get_order(order_id)
 
-            # Проверки прав и статуса
             if user_id and order.user_id != user_id:
                 raise PermissionError("User can only cancel own orders")
-            if order.status not in {OrderStatus.CREATED, OrderStatus.PAID}:
+            
+            if order.status not in {"created", "paid"}:
                 raise ValueError("Only CREATED or PAID orders can be cancelled")
 
             updates = {
-                "status": OrderStatus.CANCELLED,
+                "status": "cancelled",
                 "cancelled_at": datetime.now()
             }
+            
             if reason:
                 updates["cancellation_reason"] = reason
 
-            # Если был платеж - инициируем возврат
-            if order.status == OrderStatus.PAID and order.payment:
+            if order.status == "paid" and order.payment:
                 try:
                     await self.payment_service.refund_payment(order.payment.id)
                     ORDER_METRICS['transitions'].labels(
                         from_status=order.status,
-                        to_status=OrderStatus.CANCELLED
+                        to_status="cancelled"
                     ).inc()
                 except HTTPException as e:
                     logger.error(f"Refund failed: {str(e)}")
@@ -434,7 +425,7 @@ class OrderService:
             if user_id and order.user_id != user_id:
                 raise PermissionError("User can only delete own orders")
 
-            if order.status not in {CoreOrderStatus.CREATED, CoreOrderStatus.CANCELLED}:
+            if order.status not in {"created", "cancelled"}:
                 raise ValueError("Only CREATED or CANCELLED orders can be deleted")
 
             await self.order_repo.delete(order_id)
@@ -458,11 +449,15 @@ class OrderService:
         order = await self.order_repo.get(order_id)
 
         try:
+            # Validate status string
+            if new_status not in OrderStatusValues.__args__:
+                raise ValueError(f"Invalid status: {new_status}")
+
             # Валидация прав и переходов
-            if new_status == OrderStatus.COMPLETED and not user.is_admin:
+            if new_status == "completed" and not user.is_admin:
                 raise HTTPException(403, "Admin rights required")
 
-            OrderStatus.validate_transition(order.status, new_status)
+            OrderStatusHelper.validate_transition(order.status, new_status)
 
             # Обновление в БД
             updated = await self.order_repo.update_status(order_id, new_status)
@@ -482,3 +477,4 @@ class OrderService:
         except ValueError as e:
             logger.warning(f"Invalid status transition: {str(e)}")
             raise HTTPException(400, str(e))
+        
