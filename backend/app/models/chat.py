@@ -19,8 +19,8 @@ from datetime import datetime
 from typing import List, Optional
 
 from app.models.base import Base
-from app.models.order import Order
-from app.models.user import User
+
+# from app.models.user import User
 from sqlalchemy import Text, ForeignKey, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -60,5 +60,5 @@ class ChatMessage(Base):
     )
 
     # Связи с другими моделями
-    order: Mapped["Order"] = relationship(back_populates="messages")
+    order: Mapped["Order"] = relationship(back_populates="chat_messages")
     sender: Mapped["User"] = relationship()

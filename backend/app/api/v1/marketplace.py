@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 from pydantic import UUID4
-
+from app.core.order_status import OrderStatus 
 from app.core.dependencies import (
     CurrentUserDep,
     MarketplaceServiceDep,
@@ -69,6 +69,7 @@ async def list_market_items(
         400: {"description": "Invalid quantity"}
     }
 )
+
 async def add_to_cart(
         service: MarketplaceServiceDep,
         user: CurrentUserDep,
@@ -114,6 +115,7 @@ async def add_to_cart(
         404: {"description": "Item not found"}
     }
 )
+
 async def create_direct_order(
         item_id: UUID,
         user: CurrentUserDep,
@@ -130,7 +132,7 @@ async def create_direct_order(
         )
         return {
             "order_id": order.id,
-            "status": "created",
+            "status": OrderStatus.CREATED,
             "payment_id": payment.id
         }
     except ValueError as e:
@@ -155,22 +157,6 @@ async def create_direct_order(
         404: {"description": "Item not found"}
     }
 )
-async def add_to_cart(
-        item: CartItemAdd,
-        user: CurrentUserDep,
-        service: MarketplaceServiceDep
-):
-    try:
-        return await service.add_to_cart(
-            user_id=user.id,
-            item_id=item.item_id,
-            quantity=item.quantity
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
-        )
 
 
 @router.post(
@@ -191,15 +177,26 @@ async def add_to_cart(
         404: {"description": "Item not found"}
     }
 )
-async def create_direct_order(
-        item_id: UUID4,
-        user: CurrentUserDep,
-        service: MarketplaceServiceDep
+async def create_direct_order_endpoint(
+    item_id: UUID,
+    user: CurrentUserDep,
+    service: MarketplaceServiceDep,
+    payment_service: PaymentServiceDep
 ):
+    """Create order directly from marketplace item"""
     try:
-        return await service.create_order_from_item(user.id, item_id)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
+        order = await service.create_order_from_item(user.id, item_id)
+        payment = await payment_service.create_payment(
+            order_id=order.id,
+            amount=order.amount,
+            description=f"Order for {item_id}"
         )
+        return {
+            "order_id": order.id,
+            "status": "created",
+            "payment_id": payment.id
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="Item not found")

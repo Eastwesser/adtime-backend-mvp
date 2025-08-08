@@ -217,20 +217,20 @@ grep -r "class.*Enum" app/
 ### 2. Find all enum imports
 ```bash
 grep -r "from enum import" app/
-grep -r "import enum" app/
+# grep -r "import enum" app/
 ```
 
 ### 3. Find all Pydantic models using enums
 ```bash
-grep -r ":.*Enum" app/ | grep -v "OrderStatus"
-grep -r "=.*Enum" app/ | grep -v "OrderStatus"
+# grep -r ":.*Enum" app/ | grep -v "OrderStatus"
+# grep -r "=.*Enum" app/ | grep -v "OrderStatus"
 ```
 
 ### 4. Find custom JSON encoders
 ```bash
-grep -r "json_encoders" app/
-grep -r "json_encoder" app/
-grep -r "JSONEncoder" app/
+# grep -r "json_encoders" app/
+# grep -r "json_encoder" app/
+# grep -r "JSONEncoder" app/
 ```
 
 ### 5. Find schema modifiers
@@ -253,7 +253,7 @@ grep -r "Enum" app/core/ app/api/v1/ | grep -i "model"
 
 ### 8. Find any remaining enum serialization
 ```bash
-grep -r "\.value" app/ | grep "Enum"
+# grep -r "\.value" app/ | grep "Enum"
 ```
 
 ## Tips for effective searching:
@@ -283,3 +283,13 @@ grep -ri "enum" app/
 ```bash
 grep -r "Enum" app/ | wc -l
 ```
+
+### Clear PyCache:
+```bash
+sudo find . -name "__pycache__" -exec rm -rf {} +
+```
+
+docker-compose down -v --remove-orphans
+docker volume prune -f
+docker-compose up -d postgres redis
+docker-compose run backend alembic upgrade head

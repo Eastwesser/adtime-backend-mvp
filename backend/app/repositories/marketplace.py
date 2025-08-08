@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional, Any, Sequence
 from uuid import UUID
 
-from secretstorage import item
+
 from sqlalchemy import Row, RowMapping, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -211,7 +211,7 @@ class MarketplaceRepository(BaseRepository[MarketItem]):
             if order.user_id != user_id:
                 raise PermissionError("Cannot cancel another user's order")
 
-            if order.status not in ["created", "pending"]:
+            if order.status not in [OrderStatus.CREATED, "pending"]:
                 raise ValueError("Order cannot be canceled in current status")
 
             # Возврат платежа

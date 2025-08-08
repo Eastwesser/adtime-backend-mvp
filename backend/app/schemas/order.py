@@ -3,9 +3,9 @@ from datetime import datetime
 from typing import Optional, Dict, List, Literal
 
 from pydantic import BaseModel, Field, ConfigDict, model_validator, field_validator
-
+from app.core.order_status import OrderStatus  # Add this import
 # Define status values as Literal type
-OrderStatusValues = Literal["created", "paid", "production", "shipped", "completed", "cancelled"]
+OrderStatusValues = Literal[OrderStatus.CREATED, "paid", "production", "shipped", "completed", "cancelled"]
 
 class OrderCreate(BaseModel):
     """Схема для создания нового заказа."""
@@ -15,16 +15,16 @@ class OrderCreate(BaseModel):
         description="ID связанной генерации изображения (если требуется генерация)",
         json_schema_extra={"nullable": True}
     )
-    design_specs: Dict = Field(
-        ...,
-        example={
-            "size": "A4",
-            "material": "premium_paper",
-            "color_profile": "CMYK"
-        },
-        description="Технические параметры заказа в JSON-формате",
-        json_schema_extra={"minProperties": 1}
-    )
+    # design_specs: Dict = Field(
+    #     ...,
+    #     example={
+    #         "size": "A4",
+    #         "material": "premium_paper",
+    #         "color_profile": "CMYK"
+    #     },
+    #     description="Технические параметры заказа в JSON-формате",
+    #     json_schema_extra={"minProperties": 1}
+    # )
     factory_id: Optional[uuid.UUID] = Field(
         None,
         example="b2c3d4e5-6789-0123-4567-890123456789",
@@ -59,14 +59,15 @@ class OrderCreate(BaseModel):
             raise ValueError("Заказ должен ссылаться либо на генерацию, либо на товар")
         return self
 
-    @field_validator('design_specs')
-    @classmethod
-    def validate_design_specs(cls, v: Dict) -> Dict:
-        """Валидация design_specs"""
-        required_fields = {'size', 'material'}
-        if not required_fields.issubset(v.keys()):
-            raise ValueError(f"Design specs must contain {required_fields}")
-        return v
+    # @field_validator('design_specs')
+    # @classmethod
+    # def validate_design_specs(cls, v: Dict) -> Dict:
+    #     """Валидация design_specs"""
+    #     required_fields = {'size', 'material'}
+    #     if not required_fields.issubset(v.keys()):
+    #         raise ValueError(f"Design specs must contain {required_fields}")
+    #     return v
+
 
 class OrderBase(BaseModel):
     """Базовая схема для создания/обновления заказа."""
@@ -104,11 +105,6 @@ class OrderResponse(OrderBase):
         example="2026-01-10T12:00:00Z",
         description="Планируемая дата завершения производства",
     )
-    production_errors: Optional[List[str]] = Field(
-        None,
-        example=["Не хватило материала", "Задержка поставки"],
-        description="Ошибки производства",
-    )
     user_id: uuid.UUID = Field(
         ...,
         example="b2c3d4e5-6789-0123-4567-890123456789",
@@ -119,7 +115,7 @@ class OrderResponse(OrderBase):
         from_attributes=True,
         json_schema_extra={
             "example": {
-                "status": "created",
+                "status": OrderStatus.CREATED,
                 "amount": 1500.0,
                 "created_at": "2023-01-01T12:00:00Z",
                 "generation_id": "c3d4e5f6-7890-1234-5678-901234567890",
@@ -128,7 +124,6 @@ class OrderResponse(OrderBase):
                     "material": "premium_paper"
                 },
                 "production_deadline": "2023-01-10T12:00:00Z",
-                "production_errors": None,
                 "user_id": "b2c3d4e5-6789-0123-4567-890123456789"
             }
         }

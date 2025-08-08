@@ -11,11 +11,11 @@ import uuid
 from datetime import datetime
 from typing import Optional, Dict
 
-from sqlalchemy import UUID, Enum, ForeignKey, JSON, Text, DateTime
+# from app.models.user import User
+from sqlalchemy import UUID, String, Text, ForeignKey, JSON, DateTime, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
-from ..schemas.notifications import NotificationType, NotificationStatus
 
 
 class Notification(Base):
@@ -41,65 +41,35 @@ class Notification(Base):
         user: Пользователь, которому адресовано уведомление
     """
     __tablename__ = "notifications"
+    __table_args__ = (
+        CheckConstraint(
+            "type IN ('system', 'order', 'payment', 'support')",
+            name="check_notification_type"
+        ),
+        CheckConstraint(
+            "status IN ('unread', 'read', 'archived')",
+            name="check_notification_status"
+        ),
+    )
+
 
     # Основные поля
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
-        default=uuid.uuid4,
-        comment="Уникальный идентификатор уведомления"
+        default=uuid.uuid4
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("users.id"),
-        comment="ID пользователя-получателя"
+        ForeignKey("users.id")
     )
-    type: Mapped[str] = mapped_column(
-        Enum(
-            NotificationType.SYSTEM,
-            NotificationType.ORDER,
-            NotificationType.PAYMENT,
-            NotificationType.SUPPORT,
-            name="notification_type"
-        ),
-        default=NotificationType.SYSTEM,
-        comment=f"Тип уведомления: {', '.join(NotificationType)}"
-    )
-    status: Mapped[str] = mapped_column(
-        Enum(
-            NotificationStatus.UNREAD,
-            NotificationStatus.READ,
-            NotificationStatus.ARCHIVED,
-            name="notification_status"
-        ),
-        default=NotificationStatus.UNREAD,
-        comment=f"Статус уведомления: {', '.join(NotificationStatus)}"
-    )
-    title: Mapped[str] = mapped_column(
-        Text,
-        nullable=False,
-        comment="Заголовок уведомления"
-    )
-    message: Mapped[str] = mapped_column(
-        Text,
-        nullable=False,
-        comment="Текст уведомления"
-    )
-    payload: Mapped[Optional[Dict]] = mapped_column(
-        JSON,
-        nullable=True,
-        comment="Дополнительные данные в формате JSON"
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=datetime.now,
-        comment="Дата создания уведомления"
-    )
-    read_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="Дата прочтения уведомления"
-    )
+    type: Mapped[str] = mapped_column(String(50), default="system")
+    status: Mapped[str] = mapped_column(String(50), default="unread")
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    payload: Mapped[Optional[Dict]] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now)
+    read_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Связи
     user: Mapped["User"] = relationship(back_populates="notifications")

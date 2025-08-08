@@ -1,22 +1,12 @@
-"""
-Модель заказа на производство (updated to use strings instead of enums)
-"""
 from __future__ import annotations 
-
 import uuid
 from datetime import datetime
 from typing import Optional, Dict, List
 
-from app.models.chat import ChatMessage
-from app.models.factory import Factory
-from app.models.generation import GenerationTask
-from app.models.marketplace import MarketItem
-from app.models.payment import Payment
-from app.models.review import Review
-from app.models.user import User
+from app.core.order_status import OrderStatus
 from sqlalchemy import UUID, String, ForeignKey, JSON, Float, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
+from sqlalchemy.dialects.postgresql import JSONB
 from app.models.base import Base
 
 class Order(Base):
@@ -40,16 +30,14 @@ class Order(Base):
     )
 
     status: Mapped[str] = mapped_column(
-        String(50),  # Increased length for potential future statuses
-        default="created",
+        String(50),
+        default=OrderStatus.CREATED,
         doc="Статус заказа. Допустимые значения: created, paid, production, shipped, completed, cancelled"
     )
 
     amount: Mapped[float] = mapped_column(Float, nullable=False)
-    design_specs: Mapped[Dict] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     production_deadline: Mapped[Optional[datetime]] = mapped_column(nullable=True)
-    production_errors: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)
 
     # Связи
     user: Mapped["User"] = relationship(back_populates="orders")
@@ -77,13 +65,6 @@ class Order(Base):
             "status IN ('created', 'paid', 'production', 'shipped', 'completed', 'cancelled')",
             name="check_valid_order_status"
         ),
-        CheckConstraint(
-            "jsonb_typeof(design_specs) = 'object'",
-            name="check_design_specs_is_object"
-        ),
-        CheckConstraint(
-            "design_specs ?& array['size', 'material']",
-            name="check_required_specs_fields"
-        )
+        # Removed ALL JSON constraints
     )
     

@@ -1,12 +1,12 @@
 import uuid
 from datetime import datetime
-from enum import Enum
-from typing import Optional, Dict
+from typing import Literal, Optional, Dict, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
+PaymentStatusValues = Literal["pending", "succeeded", "canceled"]
 
-class PaymentStatus(str, Enum):
+class PaymentStatus(BaseModel):
     """Статусы платежа в системе.
 
     Values:
@@ -14,9 +14,9 @@ class PaymentStatus(str, Enum):
         SUCCEEDED: Платеж успешно завершен
         CANCELED: Платеж отменен
     """
-    PENDING = "pending"
-    SUCCEEDED = "succeeded"
-    CANCELED = "canceled"
+    PENDING: ClassVar[str] = 'pending'
+    SUCCEEDED: ClassVar[str] = 'succeeded'
+    CANCELED: ClassVar[str] = 'canceled'
 
 
 class PaymentCreate(BaseModel):
@@ -40,7 +40,7 @@ class PaymentCreate(BaseModel):
     )
     metadata: Optional[Dict] = Field(
         None,
-        description="Дополнительные метаданные платежа в формате JSON",
+        description="Дополнительные метаданные платежа",
         example={"promo_code": "SUMMER2023"}
     )
 
@@ -64,10 +64,10 @@ class PaymentResponse(PaymentCreate):
         description="Идентификатор платежа в платежной системе",
         example="pay_123456789"
     )
-    status: PaymentStatus = Field(
+    status: PaymentStatusValues = Field(  # Changed from PaymentStatus to PaymentStatusValues
         ...,
         description="Текущий статус платежа",
-        example=PaymentStatus.PENDING
+        example="pending"  # Changed from PaymentStatus.PENDING to raw string
     )
     created_at: datetime = Field(
         ...,
@@ -76,9 +76,8 @@ class PaymentResponse(PaymentCreate):
     )
 
     model_config = ConfigDict(
-        use_enum_values=True,
-        from_attributes = True,
-        json_schema_extra = {
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "id": "b2c3d4e5-6789-0123-4567-890123456789",
                 "order_id": "a1b2c3d4-5678-9012-3456-789012345678",
@@ -87,8 +86,8 @@ class PaymentResponse(PaymentCreate):
                 "status": "pending",
                 "created_at": "2023-01-01T12:00:00Z",
                 "metadata": {"promo_code": "SUMMER2023"}
-            },
-        },
+            }
+        }
     )
 
 class PaymentNotification(BaseModel):
@@ -112,10 +111,10 @@ class PaymentNotification(BaseModel):
         description="Идентификатор платежа в ЮKassa",
         example="pay_123456789"
     )
-    status: PaymentStatus = Field(
+    status: PaymentStatusValues = Field(
         ...,
         description="Статус платежа",
-        example=PaymentStatus.SUCCEEDED
+        example="succeeded"
     )
     amount: float = Field(
         ...,
@@ -127,3 +126,4 @@ class PaymentNotification(BaseModel):
         description="Метаданные платежа",
         example={"order_id": "a1b2c3d4-5678-9012-3456-789012345678"}
     )
+    

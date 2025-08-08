@@ -1,11 +1,12 @@
 import uuid
 from datetime import datetime
-from enum import Enum
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+SubscriptionPlanValues = Literal["free", "pro", "premium"]
 
-class SubscriptionPlan(str, Enum):
+class SubscriptionPlan(BaseModel):
     """Доступные тарифные планы подписки.
 
     Values:
@@ -13,9 +14,9 @@ class SubscriptionPlan(str, Enum):
         PRO: Профессиональный тариф с расширенными возможностями
         PREMIUM: Премиальный тариф с полным доступом
     """
-    FREE = "free"
-    PRO = "pro"
-    PREMIUM = "premium"
+    FREE: ClassVar[str] = 'free'
+    PRO: ClassVar[str] = 'pro'
+    PREMIUM: ClassVar[str] = 'premium'
 
 
 class SubscriptionCreate(BaseModel):
@@ -24,11 +25,7 @@ class SubscriptionCreate(BaseModel):
     Attributes:
         plan (SubscriptionPlan): Выбранный тарифный план
     """
-    plan: SubscriptionPlan = Field(
-        default=SubscriptionPlan.FREE,
-        description="Тарифный план подписки",
-        example=SubscriptionPlan.PRO
-    )
+    plan: SubscriptionPlanValues = Field(default="free", description="Subscription plan")
 
 
 class SubscriptionResponse(SubscriptionCreate):
@@ -40,31 +37,14 @@ class SubscriptionResponse(SubscriptionCreate):
         remaining_generations (int): Оставшееся количество генераций
         user_id (UUID): ID пользователя-владельца подписки
     """
-    id: uuid.UUID = Field(
-        ...,
-        description="Уникальный идентификатор подписки",
-        example="c3d4e5f6-7890-1234-5678-901234567890"
-    )
-    expires_at: datetime = Field(
-        ...,
-        description="Дата и время истечения срока действия подписки",
-        example="2024-01-01T00:00:00Z"
-    )
-    remaining_generations: int = Field(
-        ...,
-        description="Оставшееся количество доступных генераций изображений",
-        example=100
-    )
-    user_id: uuid.UUID = Field(
-        ...,
-        description="Идентификатор пользователя-владельца подписки",
-        example="a1b2c3d4-5678-9012-3456-789012345678"
-    )
+    id: uuid.UUID = Field(..., description="Subscription ID")
+    expires_at: datetime = Field(..., description="Expiration timestamp")
+    remaining_generations: int = Field(..., description="Remaining generations")
+    user_id: uuid.UUID = Field(..., description="User ID")
 
     model_config = ConfigDict(
-        use_enum_values=True,
-        from_attributes = True,
-        json_schema_extra = {
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "id": "c3d4e5f6-7890-1234-5678-901234567890",
                 "plan": "pro",

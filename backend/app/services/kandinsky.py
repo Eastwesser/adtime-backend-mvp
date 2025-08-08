@@ -2,11 +2,11 @@ import asyncio
 import base64
 from asyncio import Timeout
 from contextlib import asynccontextmanager
-from typing import Optional
-from enum import Enum
+from typing import ClassVar, Optional
+
 import httpx
 from httpx import AsyncClient, Limits, AsyncHTTPTransport
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator 
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from app.core.logger import get_logger
@@ -27,9 +27,14 @@ class GenerationRequest(BaseModel):
     width: int = Field(1024, ge=256, le=2048)
     height: int = Field(1024, ge=256, le=2048)
     num_images: int = Field(1, ge=1, le=4)
-
-
-class GenerationStatus(str, Enum):
+    
+    @field_validator('width', 'height')
+    def validate_dimensions(cls, v):
+        if v % 64 != 0:  # Kandinsky requires multiples of 64
+            raise ValueError("Dimensions must be multiples of 64")
+        return v
+    
+class GenerationStatus(BaseModel):
     """Статусы генерации в Kandinsky API.
 
     Values:
@@ -38,21 +43,23 @@ class GenerationStatus(str, Enum):
         COMPLETED: Успешно завершена
         FAILED: Завершена с ошибкой
     """
-    PENDING = 'PENDING'
-    PROCESSING = 'PROCESSING'
-    COMPLETED = 'COMPLETED'
-    FAILED = 'FAILED'
+    GENERATION_STATUS: ClassVar[dict] = {
+        'PENDING': 'PENDING',
+        'PROCESSING': 'PROCESSING', 
+        'COMPLETED': 'COMPLETED',
+        'FAILED': 'FAILED'
+    }
 
     @classmethod
-    def from_kandinsky(cls, status: str) -> 'GenerationStatus':
-        """Конвертирует статус Kandinsky API в наш enum."""
+    def from_kandinsky(cls, status: str) -> str:
+        """Converts Kandinsky API status to our status string"""
         status_map = {
-            'NEW': cls.PENDING,
-            'PROCESSING': cls.PROCESSING,
-            'DONE': cls.COMPLETED,
-            'FAIL': cls.FAILED
+            'NEW': cls.GENERATION_STATUS['PENDING'],
+            'PROCESSING': cls.GENERATION_STATUS['PROCESSING'],
+            'DONE': cls.GENERATION_STATUS['COMPLETED'],
+            'FAIL': cls.GENERATION_STATUS['FAILED']
         }
-        return status_map.get(status, cls.FAILED)
+        return status_map.get(status, cls.GENERATION_STATUS['FAILED'])
 
 class KandinskyAPI:
     """Клиент для работы с Kandinsky API (https://fusionbrain.ai/).
@@ -224,11 +231,7 @@ class KandinskyAPI:
         finally:
             await self.client.aclose()
 
-        async def __aenter__(self):
-            return self
 
-        async def __aexit__(self, exc_type, exc_val, exc_tb):
-            await self.client.aclose()
 
     async def cancel_generation(self, external_task_id: str) -> bool:
         """Отмена задачи генерации в Kandinsky API.

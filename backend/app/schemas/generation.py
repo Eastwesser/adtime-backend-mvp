@@ -1,25 +1,10 @@
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+from typing import Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
-
-class GenerationStatus(str, Enum):
-    """Статусы генерации изображения.
-
-    Values:
-        PENDING: В очереди на обработку
-        PROCESSING: В процессе генерации
-        COMPLETED: Успешно завершена
-        FAILED: Завершена с ошибкой
-    """
-    PENDING = "pending"
-    PROCESSING = "processing"
-    COMPLETED = "completed"
-    FAILED = "failed"
-
+GenerationStatusValues = Literal["pending", "processing", "completed", "failed"]
 
 class GenerationCreate(BaseModel):
     """Модель для создания запроса на генерацию изображения.
@@ -30,13 +15,13 @@ class GenerationCreate(BaseModel):
     """
     prompt: str = Field(
         ...,
-        examples=["Cyberpunk cityscape at night", "Watercolor landscape of mountains"],
+        examples=["Cyberpunk cityscape at night"],
         max_length=1000,
-        description="Текстовое описание для генерации изображения"
+        description="Text prompt for image generation"
     )
     model_version: str = Field(
         default="kandinsky-2.1",
-        description="Версия модели для генерации изображения"
+        description="Model version for image generation"
     )
 
 
@@ -52,40 +37,16 @@ class GenerationResponse(GenerationCreate):
         created_at (datetime): Дата создания
         user_id (UUID): ID пользователя
     """
-    id: UUID = Field(
-        default=...,
-        description="Уникальный идентификатор генерации",
-    )
-    status: GenerationStatus = Field(
-        default=...,
-        description="Текущий статус генерации",
-    )
-    enhanced_prompt: Optional[str] = Field(
-        None,
-        description="Оптимизированный промпт (опционально)"
-    )
-    result_url: Optional[HttpUrl] = Field(
-        None,
-        description="URL сгенерированного изображения (опционально)"
-    )
-    external_task_id: Optional[str] = Field(
-        None,
-        description="ID задачи во внешнем сервисе (опционально)"
-    )
-    created_at: datetime = Field(
-        default=...,
-        description="Дата создания генерации",
-    )
-    user_id: UUID = Field(
-        default=...,
-        description="ID пользователя",
-    )
+    id: UUID = Field(..., description="Unique generation ID")
+    status: GenerationStatusValues = Field(..., description="Current status")
+    enhanced_prompt: Optional[str] = Field(None, description="Optimized prompt")
+    result_url: Optional[HttpUrl] = Field(None, description="Generated image URL")
+    external_task_id: Optional[str] = Field(None, description="External task ID")
+    created_at: datetime = Field(..., description="Creation timestamp")
+    user_id: UUID = Field(..., description="User ID")
 
-    model_config = ConfigDict(
-        use_enum_values=True,                
-        from_attributes = True
-    )
-
+    model_config = ConfigDict(from_attributes=True)
+    
 class GenerationStatusResponse(BaseModel):
     """Модель ответа с текущим статусом генерации.
 
@@ -93,11 +54,5 @@ class GenerationStatusResponse(BaseModel):
         status (GenerationStatus): Текущий статус
         result_url (HttpUrl): URL результата (если завершено)
     """
-    status: GenerationStatus = Field(
-        default=...,
-        description="Текущий статус генерации",
-    )
-    result_url: Optional[HttpUrl] = Field(
-        None,
-        description="URL сгенерированного изображения (если завершено)"
-    )
+    status: GenerationStatusValues = Field(..., description="Current status")
+    result_url: Optional[HttpUrl] = Field(None, description="Result URL if completed")

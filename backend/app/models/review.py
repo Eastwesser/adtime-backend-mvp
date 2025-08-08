@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional
 
 from app.models.base import Base
+# from app.models.order import Order
 from sqlalchemy import Integer, Text, ForeignKey, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

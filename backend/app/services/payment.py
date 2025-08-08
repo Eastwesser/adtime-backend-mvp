@@ -174,7 +174,7 @@ class PaymentService:
         if not payment:
             raise HTTPException(404, "Payment not found")
 
-        if payment.status not in ["pending", "waiting_for_capture"]:
+        if payment.status not in [OrderStatus.PENDING, "waiting_for_capture"]:
             return False
 
         try:
@@ -223,7 +223,7 @@ class PaymentService:
         if not payment:
             raise HTTPException(404, "Payment not found")
 
-        if payment.status != "succeeded":
+        if payment.status != OrderStatus.SUCCEEDED: 
             raise HTTPException(400, "Only succeeded payments can be refunded")
 
         try:
@@ -297,6 +297,7 @@ class PaymentService:
                 payment_id,
                 {
                     "status": yoo_payment.status,
+                    
                     "captured_at": datetime.now()
                 }
             )

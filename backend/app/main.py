@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from enum import Enum
+
 from typing import Any, Dict
 
 from fastapi import FastAPI
@@ -17,7 +17,6 @@ async def lifespan(app: FastAPI):
     """App lifespan management"""
     await init_db()
     yield
-
 
 app = FastAPI(
     title="AdTime API",

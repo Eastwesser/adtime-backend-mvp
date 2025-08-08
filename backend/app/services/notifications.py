@@ -26,7 +26,7 @@ class NotificationService:
             user_id: UUID,
             title: str,
             message: str,
-            notification_type: NotificationType = NotificationType.SYSTEM,
+            notification_type: NotificationType = "system",
             payload: Optional[dict] = None
     ) -> NotificationResponse:
         """Отправляет уведомление пользователю."""

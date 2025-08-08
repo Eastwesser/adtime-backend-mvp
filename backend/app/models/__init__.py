@@ -10,19 +10,22 @@
 
 Импорты должны быть в правильном порядке без циклических зависимостей.
 """
-# Сначала базовые модели без зависимостей
+# First base only
 from .base import Base
+
+# Then models without dependencies
 from .user import User
+from .factory import Factory
+
+# Then models that depend on those
 from .generation import Generation as GenerationTask
 from .marketplace import MarketItem
 from .payment import Payment
 from .review import Review
 from .chat import ChatMessage
-
-# Затем модели с зависимостями
-from .factory import Factory
 from .order import Order
 from .subscription import Subscription
+from .notifications import Notification
 
 __all__ = [
     "User", 
@@ -33,5 +36,6 @@ __all__ = [
     "Factory",
     "Payment",
     "Review",
-    "ChatMessage"
+    "ChatMessage",
+    "Notification"
 ]

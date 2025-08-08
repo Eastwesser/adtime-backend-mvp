@@ -9,17 +9,20 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy import select, Row, RowMapping
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.models.user import User 
 from app.repositories.chat import ChatRepository
 from app.repositories.generation import GenerationRepository
 from app.repositories.order import OrderRepository
 from app.schemas.order import OrderCreate, OrderResponse, ChatMessageSchema, OrderUpdate
 from app.services.payment import PaymentService, logger
 from ..core.monitoring.monitoring import ORDER_METRICS
-from app.core.order_status import StatusValues as OrderStatusValues
-from app.core.order_status import OrderStatusHelper
+from app.core.order_status import OrderStatus, StatusValues, OrderStatusHelper
 from ..models import Order
-
+from app.core.order_status import (
+    OrderStatus,
+    StatusValues,
+    OrderStatusHelper
+)
 
 def _calculate_amount(order_in: OrderCreate) -> float:
     """Расчет стоимости заказа на основе спецификаций дизайна.
@@ -74,7 +77,7 @@ class OrderService:
         order_data = {
             **order_in.model_dump(),
             "user_id": user_id,
-            "status": "created",
+            "status": OrderStatus.CREATED,
             "amount": _calculate_amount(order_in)
         }
         return await self.order_repo.create(order_data)
@@ -292,14 +295,14 @@ class OrderService:
             order = await self.get_order(order_id)
 
             # Проверка статуса заказа
-            if order.status != "paid":
+            if order.status != OrderStatus.PAID: 
                 raise ValueError("Only PAID orders can be assigned to factory")
             
             updated_order = await self.order_repo.update(
                 order_id,
                 {
                     "factory_id": factory_id,
-                    "status": "production",
+                    "status": OrderStatus.PRODUCTION, 
                     "production_deadline": datetime.now() + timedelta(days=7)
                 }
             )
@@ -331,16 +334,17 @@ class OrderService:
             if user_id and order.user_id != user_id:
                 raise PermissionError("User can only complete own orders")
 
-            if order.status != "shipped":
+            if order.status != OrderStatus.SHIPPED:
                 raise ValueError("Only SHIPPED orders can be completed")
             
             updated_order = await self.order_repo.update(
                 order_id,
                 {
-                    "status": "completed",
+                    "status": OrderStatus.COMPLETED, 
                     "completed_at": datetime.now()
                 }
-    )
+            )
+    
 
             return updated_order
 
@@ -374,11 +378,11 @@ class OrderService:
             if user_id and order.user_id != user_id:
                 raise PermissionError("User can only cancel own orders")
             
-            if order.status not in {"created", "paid"}:
+            if order.status not in {OrderStatus.CREATED, OrderStatus.PAID}:
                 raise ValueError("Only CREATED or PAID orders can be cancelled")
 
             updates = {
-                "status": "cancelled",
+                "status": OrderStatus.CANCELLED,
                 "cancelled_at": datetime.now()
             }
             
@@ -425,7 +429,7 @@ class OrderService:
             if user_id and order.user_id != user_id:
                 raise PermissionError("User can only delete own orders")
 
-            if order.status not in {"created", "cancelled"}:
+            if order.status not in {OrderStatus.CREATED, OrderStatus.CANCELLED}:
                 raise ValueError("Only CREATED or CANCELLED orders can be deleted")
 
             await self.order_repo.delete(order_id)

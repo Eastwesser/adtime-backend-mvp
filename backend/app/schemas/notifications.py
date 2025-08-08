@@ -1,40 +1,11 @@
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+from typing import Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
-class NotificationType(str, Enum):
-    """
-    Типы системных уведомлений.
-
-    Values:
-        SYSTEM: Системное уведомление
-        ORDER: Уведомление о заказе
-        PAYMENT: Уведомление о платеже
-        SUPPORT: Ответ поддержки
-    """
-    SYSTEM = "system"
-    ORDER = "order"
-    PAYMENT = "payment"
-    SUPPORT = "support"
-
-
-class NotificationStatus(str, Enum):
-    """
-    Статусы уведомлений.
-
-    Values:
-        UNREAD: Не прочитано
-        READ: Прочитано
-        ARCHIVED: В архиве
-    """
-    UNREAD = "unread"
-    READ = "read"
-    ARCHIVED = "archived"
-
+NotificationTypeValues = Literal["system", "order", "payment", "support"]
+NotificationStatusValues = Literal["unread", "read", "archived"]
 
 class NotificationBase(BaseModel):
     """
@@ -48,11 +19,10 @@ class NotificationBase(BaseModel):
         payload (Optional[dict]): Дополнительные данные
     """
     user_id: UUID
-    type: NotificationType = NotificationType.SYSTEM
+    type: NotificationTypeValues = "system"
     title: str = Field(..., max_length=100)
     message: str = Field(..., max_length=1000)
     payload: Optional[dict] = None
-
 
 class NotificationResponse(NotificationBase):
     """
@@ -65,12 +35,12 @@ class NotificationResponse(NotificationBase):
         read_at (Optional[datetime]): Дата прочтения
     """
     id: UUID
-    status: NotificationStatus = NotificationStatus.UNREAD
+    status: NotificationStatusValues = "unread"
     created_at: datetime
     read_at: Optional[datetime] = None
 
-    model_config = ConfigDict(
-        use_enum_values=True,
-        from_attributes = True
-    )
+    model_config = ConfigDict(from_attributes=True)
     
+
+NotificationType = NotificationTypeValues
+NotificationStatus = NotificationStatusValues    
