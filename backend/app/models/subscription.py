@@ -50,4 +50,6 @@ class Subscription(Base):
     remaining_generations: Mapped[int] = mapped_column(Integer, default=5)
 
     # Связи
-    user: Mapped["User"] = relationship(back_populates="subscription", cascade="all, delete-orphan")
+    user: Mapped["User"] = relationship(
+        back_populates="subscription",
+    )

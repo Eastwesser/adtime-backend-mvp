@@ -1,24 +1,11 @@
 import uuid
 from datetime import datetime
-from typing import ClassVar, Literal, Optional 
+from typing import Literal, Optional 
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-
-
-UserRoleValues = Literal["user", "designer", "admin"]
-
-class UserRole(BaseModel):
-    """Роли пользователей в системе.
-
-    Values:
-        USER: Обычный пользователь
-        DESIGNER: Дизайнер (может публиковать работы в маркетплейсе)
-        ADMIN: Администратор системы
-    """
-    USER: ClassVar[str] = "user"
-    DESIGNER: ClassVar[str] = "designer"
-    ADMIN: ClassVar[str] = "admin"
+# Define allowed roles as a Literal type
+UserRole = Literal["user", "designer", "admin"]
 
 
 class UserBase(BaseModel):
@@ -28,16 +15,9 @@ class UserBase(BaseModel):
         email (EmailStr): Email пользователя (валидируется)
         role (UserRole): Роль пользователя (по умолчанию USER)
     """
-    email: EmailStr = Field(
-        ...,
-        description="Email пользователя",
-        example="user@example.com"
-    )
-    role: UserRole = Field(
-        default=UserRole.USER,
-        description="Роль пользователя в системе"
-    )
-
+    email: EmailStr = Field(..., max_length=255)
+    role: Literal["user", "designer", "admin"] = Field(default="user")
+    created_at: Optional[datetime] = Field(default=None)
 
 
 class UserCreate(UserBase):
@@ -45,8 +25,13 @@ class UserCreate(UserBase):
 
     Добавляет к UserBase поле password.
     """
-    password: str = Field(..., min_length=8, max_length=50)
-
+    password: str = Field(
+        ...,
+        min_length=8,
+        max_length=50,
+        description="Must contain at least 8 characters"
+    )
+    telegram_id: Optional[str] = Field(None, max_length=100)
 
 class UserResponse(UserBase):
     """Схема для ответа с данными пользователя.
@@ -56,9 +41,9 @@ class UserResponse(UserBase):
         telegram_id (Optional[str]): ID в Telegram (если привязан)
         created_at (datetime): Дата регистрации
     """
-    id: uuid.UUID = Field(..., example="a1b2c3d4-5678-9012-3456-789012345678")
-    telegram_id: Optional[str] = Field(None, example="123456789")
-    created_at: datetime = Field(..., example="2023-01-01T00:00:00Z")
+    id: uuid.UUID
+    telegram_id: Optional[str] = Field(None, max_length=100)
+    created_at: Optional[datetime] = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -73,11 +58,12 @@ class UserResponse(UserBase):
         }
     )
 
+
 class UserUpdate(BaseModel):
     """Модель для обновления данных пользователя.
 
     Все поля опциональны - обновляются только переданные значения.
     """
-    email: Optional[EmailStr] = Field(None, example="new.email@example.com")
+    email: Optional[EmailStr] = None
     password: Optional[str] = Field(None, min_length=8, max_length=50)
-    telegram_id: Optional[str] = Field(None, example="987654321")
+    telegram_id: Optional[str] = None

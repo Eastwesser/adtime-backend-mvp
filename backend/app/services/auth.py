@@ -1,10 +1,13 @@
 # Аутентификация, JWT
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
+from fastapi import HTTPException, status
+from datetime import datetime, timezone
+from sqlalchemy.exc import IntegrityError, DBAPIError
 
-from fastapi import HTTPException
 from jose import jwt, ExpiredSignatureError, JWTError
 from passlib.context import CryptContext
+
 
 from app.core.config import settings
 from app.models.user import User
@@ -63,24 +66,21 @@ class AuthService:
         Returns:
             Token: Объект с токеном доступа
         """
-        expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        expire = datetime.now() + expires_delta
-
-        to_encode = {
+        expires = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+        payload = {
             "sub": str(user.id),
             "email": user.email,
             "role": user.role,
-            "exp": expire
+            "exp": expires
         }
-        encoded_jwt = jwt.encode(
-            to_encode,
+        token = jwt.encode(
+            payload,
             settings.JWT_PRIVATE_KEY,
             algorithm=settings.ALGORITHM
         )
-        return Token(
-            access_token=encoded_jwt,
-            token_type="bearer"
-        )
+        return Token(access_token=token, token_type="bearer")
 
     async def authenticate_user(self, email: str, password: str) -> Optional[UserResponse]:
         """Аутентифицирует пользователя по email и паролю.
@@ -92,7 +92,7 @@ class AuthService:
         Returns:
             Optional[UserResponse]: Данные пользователя или None если аутентификация не удалась
         """
-        user = await self.user_repo.get_by_email(email)  # Сессия внутри репозитория
+        user = await self.user_repo.get_by_email(email)
         if not user or not self.verify_password(password, user.hashed_password):
             return None
         return UserResponse.model_validate(user)
@@ -109,18 +109,52 @@ class AuthService:
         Raises:
             HTTPException: Если email уже занят
         """
-        if await self.user_repo.get_by_email(user_create.email):
+        try:
+            # Check for existing email first
+            existing_user = await self.user_repo.get_by_email(user_create.email)
+            if existing_user:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Email already registered"
+                )
+
+            # Prepare user data
+            user_data = {
+                "email": user_create.email,
+                "hashed_password": self.get_password_hash(user_create.password),
+                "role": user_create.role,
+                "created_at": datetime.now(timezone.utc)
+            }
+            
+            if user_create.telegram_id:
+                # Check for existing telegram_id if provided
+                if await self.user_repo.get_by_telegram_id(user_create.telegram_id):
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Telegram ID already in use"
+                    )
+                user_data["telegram_id"] = user_create.telegram_id
+
+            # Attempt creation
+            try:
+                user = await self.user_repo.create(user_data)
+                return UserResponse.model_validate(user)
+            except IntegrityError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Database integrity error - possible duplicate data"
+                )
+
+        except DBAPIError as e:
             raise HTTPException(
-                status_code=400,
-                detail="Email already registered"
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Database service unavailable"
             )
-
-        hashed_password = self.get_password_hash(user_create.password)
-        user_dict = user_create.model_dump(exclude={"password"})
-        user_dict["hashed_password"] = hashed_password
-
-        user = await self.user_repo.create(user_dict)
-        return UserResponse.model_validate(user)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Registration failed: {str(e)}"
+            )
 
     async def refresh_token(self, refresh_token: str) -> Token:
         """Обновляет access token по refresh token.

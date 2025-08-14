@@ -1,14 +1,20 @@
+from __future__ import annotations
+import uuid
 from datetime import datetime
-from typing import Optional, Sequence
-from uuid import UUID
+from typing import List, Optional, Sequence
+
+
+from sqlalchemy import UUID, String, CheckConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from sqlalchemy import or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-
+from sqlalchemy import exc 
 from app.models.user import User
 from .base import BaseRepository
 
+from app.models.base import Base
 
 class UserRepository(BaseRepository[User]):
     """
@@ -41,20 +47,28 @@ class UserRepository(BaseRepository[User]):
             email: str,
     ) -> Optional[User]:
         """Находит пользователя по email. Использует внутреннюю сессию."""
-        result = await self.session.execute(
-            select(User).where(User.email == email)
-        )
-        return result.scalar_one_or_none()
+        try:
+            result = await self.session.execute(
+                select(User).where(User.email == email)
+            )
+            return result.scalar_one_or_none()
+        except exc.InvalidCachedStatementError:
+            await self.session.connection().invalidate()
+            result = await self.session.execute(
+                select(User).where(User.email == email)
+            )
+            return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_by_telegram(self, session: AsyncSession, tg_id: str) -> Optional[User]:
+    async def get_by_telegram(session: AsyncSession, tg_id: str) -> Optional[User]:
         """Находит пользователя по Telegram ID. Использует внутреннюю сессию."""
         result = await session.execute(
             select(User).where(User.telegram_id == tg_id)
         )
         return result.scalar_one_or_none()
 
-    async def update_last_login(self, user_id: UUID) -> None:
+
+    async def update_last_login(self, user_id: uuid.UUID) -> None:
         """Обновляет время последнего входа"""
         await self.session.execute(
             update(User)
@@ -63,13 +77,9 @@ class UserRepository(BaseRepository[User]):
         )
         await self.session.commit()
 
-    async def search(
-            self,
-            query: str,
-            limit: int = 10
-    ) -> Sequence[User]:
+    async def search(self, query: str, limit: int = 10) -> Sequence[User]:
         """Поиск пользователей по email или имени"""
-        stmt = (
+        result = await self.session.execute(
             select(User)
             .where(
                 or_(
@@ -79,5 +89,15 @@ class UserRepository(BaseRepository[User]):
             )
             .limit(limit)
         )
-        result = await self.session.execute(stmt)
         return result.scalars().all()
+
+    async def get_by_telegram_id(self, telegram_id: str) -> Optional[User]:
+        result = await self.session.execute(
+            select(User)
+            .where(
+                User.telegram_id == telegram_id,
+                ),
+            )
+        
+        return result.scalars().first()
+        

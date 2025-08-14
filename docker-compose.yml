@@ -1,6 +1,9 @@
+version: '3.8'
+
 services:
   postgres:
     image: postgres:15
+    container_name: adtime_postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: adtime
@@ -10,57 +13,72 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d adtime"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - backend-network
 
   redis:
     image: redis:7
+    container_name: adtime_redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - backend-network
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-
+    container_name: adtime_backend
     ports:
       - "8042:8042"
     env_file:
       - ./backend/.env
     volumes:
       - ./backend:/app
+      - /app/__pycache__
+      - /app/.pytest_cache
     environment:
-      PYTHONPATH: "/app" 
+      PYTHONPATH: "/app"
+      DATABASE_URL: "postgresql+asyncpg://postgres:adtime@postgres:5432/adtime"
+      REDIS_URL: "redis://redis:6379/0"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - backend-network
 
   prometheus:
-    networks:
-      - default
     image: prom/prometheus
+    container_name: adtime_prometheus
     ports:
       - "9090:9090"
     volumes:
       - ./backend/app/core/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     depends_on:
       - backend
+    networks:
+      - backend-network
 
 networks:
-  default:
+  backend-network:
     driver: bridge
+    name: adtime_network
 
 volumes:
   postgres_data:
+    name: adtime_postgres_data
   redis_data:
+    name: adtime_redis_data

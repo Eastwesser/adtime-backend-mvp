@@ -9,7 +9,7 @@
 from __future__ import annotations
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy import String, DateTime, UUID as SQLUUID, ForeignKey, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -48,8 +48,12 @@ class Generation(Base):
     external_task_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
 
     user: Mapped["User"] = relationship(back_populates="generation_tasks")
-    order: Mapped[Optional["Order"]] = relationship(back_populates="generation")
-    
+    orders: Mapped[List["Order"]] = relationship(
+        "Order",
+        back_populates="generation_task",
+        lazy="selectin"
+    )
+        
 
 # Псевдоним для обратной совместимости
 GenerationTask = Generation

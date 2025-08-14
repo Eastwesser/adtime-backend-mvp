@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from functools import lru_cache
 from app.core.database import async_session
 from app.core.config import settings
 from app.core.rate_limiter import RateLimiter

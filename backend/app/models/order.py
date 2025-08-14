@@ -41,7 +41,12 @@ class Order(Base):
 
     # Связи
     user: Mapped["User"] = relationship(back_populates="orders")
-    generation: Mapped[Optional["GenerationTask"]] = relationship(back_populates="order")
+    generation_task: Mapped["Generation"] = relationship(
+        "Generation",
+        foreign_keys="[Order.generation_id]",
+        back_populates="orders",
+        lazy="selectin"
+    )
     payment: Mapped["Payment"] = relationship(back_populates="order")
 
     # Производственные данные

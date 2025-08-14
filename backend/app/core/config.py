@@ -6,7 +6,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from yookassa import Configuration
 import rsa
 
-
 class Settings(BaseSettings):
     PROJECT_NAME: str = "AdTime Marketplace"
     DEBUG: bool = Field(default=False, env="DEBUG")
@@ -74,6 +73,22 @@ class Settings(BaseSettings):
             raise ValueError('Invalid S3 endpoint URL')
         return v
 
+    def load_keys(self):
+        """Load keys from files"""
+        try:
+            with open('private.pem') as f:
+                self.JWT_PRIVATE_KEY = f.read().strip()
+            with open('public.pem') as f:
+                self.JWT_PUBLIC_KEY = f.read().strip()
+        except FileNotFoundError:
+            # Fall back to generating new keys if files don't exist
+            self.generate_keys()
+            # Save the generated keys
+            with open('private.pem', 'w') as f:
+                f.write(self.JWT_PRIVATE_KEY)
+            with open('public.pem', 'w') as f:
+                f.write(self.JWT_PUBLIC_KEY)
+
     def generate_keys(self):
         """Generate RSA keys if not provided"""
         if not self.JWT_PRIVATE_KEY:
@@ -101,17 +116,16 @@ class Settings(BaseSettings):
             "echo": self.DB_ECHO
         }
 
-
-settings = Settings()
-settings.generate_keys()
-
-
 class YooKassaConfig:
     @classmethod
-    def setup(cls):
-        """Initialize YooKassa with project settings"""
+    def setup(cls, settings: Settings):
         Configuration.account_id = settings.YOOKASSA_SHOP_ID
         Configuration.secret_key = settings.YOOKASSA_SECRET_KEY
 
+def get_settings() -> Settings:
+    """Factory function for getting settings"""
+    settings = Settings()
+    settings.load_keys()
+    return settings
 
-YooKassaConfig.setup()
+settings = get_settings()

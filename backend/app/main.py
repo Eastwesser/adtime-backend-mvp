@@ -1,16 +1,15 @@
 from contextlib import asynccontextmanager
 
-from typing import Any, Dict
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
 from app.api.v1 import router as api_router
-from app.core.config import settings
+from app.core.config import settings, YooKassaConfig
 from app.core.database import init_db
 from app.core.monitoring import setup_monitoring
 
+YooKassaConfig.setup(settings)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,7 +20,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="AdTime API",
     description="API for AdTime image generation and payments",
-    version=settings.API_VERSION,
+    version=settings.API_VERSION, 
     lifespan=lifespan,
     contact={
         "name": "Support",
@@ -96,7 +95,6 @@ def custom_openapi():
 app.openapi = custom_openapi
 app.include_router(api_router, prefix="/api/v1")
 
-
 @app.get("/", include_in_schema=False)
 async def root():
     return {"status": "ok", "version": settings.API_VERSION}
@@ -111,3 +109,4 @@ async def health_check():
         "database": "connected",
         "redis": "connected"
     }
+

@@ -1,9 +1,15 @@
+# At the top of env.py:
 import sys
-from os.path import abspath, dirname
 from pathlib import Path
 
+# Add the project root to Python path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+# Import settings after path is set
+from app.core.config import Settings, get_settings
+settings = get_settings()
+
 from app.models.base import Base
-from app.core.config import settings
 
 import asyncio
 from logging.config import fileConfig
@@ -54,11 +60,20 @@ def run_migrations_offline():
 
 async def run_async_migrations():
     """Run migrations in 'online' mode with async support."""
+    db_url = str(settings.DATABASE_URL).replace(
+        "postgresql://", "postgresql+asyncpg://"
+    )
     connectable = create_async_engine(
-        str(settings.DATABASE_URL),  # Convert to string here
-        poolclass=NullPool,  # Disable connection pooling for migrations
+        db_url,
+        poolclass=NullPool,
         echo=True if settings.DEBUG else False
     )
+
+    # connectable = create_async_engine(
+    #     str(settings.DATABASE_URL),  # Convert to string here
+    #     poolclass=NullPool,  # Disable connection pooling for migrations
+    #     echo=True if settings.DEBUG else False
+    # )
 
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)

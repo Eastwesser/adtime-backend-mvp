@@ -3,11 +3,20 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 from app.core.config import settings
 
+
 # Базовый класс для моделей (альтернатива отдельному base.py)
 Base = declarative_base()
 
 # Асинхронный движок
-engine = create_async_engine(str(settings.DATABASE_URL), echo=settings.DB_ECHO)
+engine = create_async_engine(
+    str(settings.DATABASE_URL), 
+    pool_size=10,
+    max_overflow=20,
+    pool_pre_ping=True,
+    pool_recycle=3600,
+    pool_timeout=30,
+    echo=settings.DB_ECHO,
+)
 
 # Фабрика сессий
 async_session = sessionmaker(
