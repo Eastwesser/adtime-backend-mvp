@@ -1,6 +1,6 @@
 # backend/app/api/v1/auth.py
-from datetime import timedelta
-
+import uuid
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -82,6 +82,7 @@ class EmailExistsError:
     responses={
         201: {"description": "User created successfully"},
         400: {"description": "Email already exists"},
+        409: {"description": "Email or Telegram ID already exists"},
         422: {"description": "Validation error"}
     },
     tags=["Authentication"]
@@ -91,24 +92,35 @@ async def register(
         auth_service: AuthService = Depends(get_auth_service)
 ):
     """Register new user and return tokens"""
-    user = await auth_service.register_user(user_create)
-    token = auth_service.create_access_token(user)
-
     try:
         user = await auth_service.register_user(user_create)
-        access_token = create_access_token(str(user.id))
+        
+        # Create tokens with all required fields
+        access_token = create_access_token(
+            str(user.id),
+            expires_delta=timedelta(minutes=30),
+            role=user.role
+        )
         refresh_token = create_refresh_token(str(user.id))
 
         return UserLoginResponse(
             user=user,
-            access_token=TokenResponse(
+            token=TokenResponse(
                 access_token=access_token,
-                token_type="bearer"
+                token_type="bearer",
+                token_id=str(uuid.uuid4()),
+                expires_in=1800,
+                issued_at=datetime.now(timezone.utc).isoformat(),
+                scopes=["read", "write"],
+                refresh_token=refresh_token  # Include refresh_token here
             ),
-            refresh_token=refresh_token
+            requires_2fa=False
         )
-    except ValueError as e:
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
+    

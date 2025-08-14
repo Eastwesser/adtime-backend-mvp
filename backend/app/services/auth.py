@@ -110,13 +110,20 @@ class AuthService:
             HTTPException: Если email уже занят
         """
         try:
-            # Check for existing email first
-            existing_user = await self.user_repo.get_by_email(user_create.email)
-            if existing_user:
+            # Check for existing email
+            if await self.user_repo.get_by_email(user_create.email):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="Email already registered"
                 )
+
+            # Check for telegram_id if provided
+            if user_create.telegram_id:
+                if await self.user_repo.get_by_telegram_id(user_create.telegram_id):
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Telegram ID already in use"
+                    )
 
             # Prepare user data
             user_data = {
@@ -127,33 +134,21 @@ class AuthService:
             }
             
             if user_create.telegram_id:
-                # Check for existing telegram_id if provided
-                if await self.user_repo.get_by_telegram_id(user_create.telegram_id):
-                    raise HTTPException(
-                        status_code=status.HTTP_409_CONFLICT,
-                        detail="Telegram ID already in use"
-                    )
                 user_data["telegram_id"] = user_create.telegram_id
 
-            # Attempt creation
-            try:
-                user = await self.user_repo.create(user_data)
-                return UserResponse.model_validate(user)
-            except IntegrityError as e:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Database integrity error - possible duplicate data"
-                )
+            # Create user - don't start a new transaction here
+            user = await self.user_repo.create(user_data)
+            await self.user_repo.session.flush()
+            await self.user_repo.session.refresh(user)
+            return UserResponse.model_validate(user)
 
-        except DBAPIError as e:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Database service unavailable"
-            )
+        except HTTPException:
+            raise
         except Exception as e:
+            await self.user_repo.session.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Registration failed: {str(e)}"
+                detail=f"Unexpected error during registration: {str(e)}"
             )
 
     async def refresh_token(self, refresh_token: str) -> Token:

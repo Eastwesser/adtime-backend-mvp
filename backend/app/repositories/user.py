@@ -42,6 +42,22 @@ class UserRepository(BaseRepository[User]):
     def __init__(self, session: AsyncSession):
         super().__init__(User, session)  # Сессия сохраняется в базовом классе
 
+    async def create(self, user_data: dict) -> User:
+        """Create user without committing"""
+        try:
+            user = User(**user_data)
+            self.session.add(user)
+            await self.session.flush()  # Generates ID but doesn't commit
+            await self.session.refresh(user)
+            return user
+        except exc.IntegrityError as e:
+            await self.session.rollback()
+            if "users_email_key" in str(e):
+                raise ValueError("Email already exists")
+            elif "users_telegram_id_key" in str(e):
+                raise ValueError("Telegram ID already exists")
+            raise
+
     async def get_by_email(
             self,
             email: str,
