@@ -1,6 +1,5 @@
 # AdTime Backend API
 
-
 Clear all, before work:
 
 ```bash
@@ -20,12 +19,9 @@ Alembic DB Migrations:
 ```bash
 docker-compose run backend alembic upgrade head
 
-
 # While server is ONLINE
 docker-compose exec backend alembic revision --autogenerate -m "fix_relationships"
 docker-compose exec backend alembic upgrade head
-
-
 
 docker-compose down -v
 docker volume prune -f
