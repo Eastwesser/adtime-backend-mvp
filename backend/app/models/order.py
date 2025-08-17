@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional, Dict, List
 
 from app.core.order_status import OrderStatus
-from sqlalchemy import UUID, String, ForeignKey, JSON, Float, CheckConstraint
+from sqlalchemy import UUID, Integer, String, ForeignKey, JSON, Float, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from app.models.base import Base
@@ -35,7 +35,7 @@ class Order(Base):
         doc="Статус заказа. Допустимые значения: created, paid, production, shipped, completed, cancelled"
     )
 
-    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     production_deadline: Mapped[Optional[datetime]] = mapped_column(nullable=True)
 
@@ -70,6 +70,5 @@ class Order(Base):
             "status IN ('created', 'paid', 'production', 'shipped', 'completed', 'cancelled')",
             name="check_valid_order_status"
         ),
-        # Removed ALL JSON constraints
     )
     

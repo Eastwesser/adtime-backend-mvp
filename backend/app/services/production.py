@@ -17,6 +17,12 @@ from app.models.order import OrderStatus, Order
 from app.repositories.factory import FactoryRepository
 from app.repositories.order import OrderRepository
 from app.schemas.order import OrderResponse
+from app.core.errors import (
+    NotFoundError, 
+    PermissionDeniedError,
+    APIError
+)
+from app.schemas.errors import ErrorResponse
 
 logger = get_logger(__name__)
 
@@ -74,11 +80,17 @@ class ProductionService:
                 factory = await self._get_factory(order, factory_id)
                 updated_order = await self._update_order_status(order_id, factory)
                 await self._notify_factory_if_needed(factory, order_id)
-                return OrderResponse.from_orm(updated_order)
-            except HTTPException:
-                raise
-            except Exception as e:
-                await self._handle_assign_error(order_id, e)
+                return OrderResponse.model_validate(updated_order)
+            except NotFoundError as e:
+                raise HTTPException(
+                    status_code=404,
+                    detail=ErrorResponse(
+                        message=str(e),
+                        code="not_found"
+                    ).model_dump()
+                )
+            except APIError as e:
+                raise 
 
     async def _validate_order(self, order_id: UUID) -> Order:
         """Проверяет существование заказа."""
@@ -315,3 +327,4 @@ class ProductionService:
             )
             response.raise_for_status()
             return response.json()
+        

@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
-from typing import Optional, Dict, List, Literal
+from typing import Any, Optional, Dict, List, Literal
 
-from pydantic import BaseModel, Field, ConfigDict, model_validator, field_validator
+from pydantic import BaseModel, Field, ConfigDict, computed_field, model_validator, field_validator
 from app.core.order_status import OrderStatus  # Add this import
 # Define status values as Literal type
 OrderStatusValues = Literal[OrderStatus.CREATED, "paid", "production", "shipped", "completed", "cancelled"]
@@ -15,16 +15,6 @@ class OrderCreate(BaseModel):
         description="ID связанной генерации изображения (если требуется генерация)",
         json_schema_extra={"nullable": True}
     )
-    # design_specs: Dict = Field(
-    #     ...,
-    #     example={
-    #         "size": "A4",
-    #         "material": "premium_paper",
-    #         "color_profile": "CMYK"
-    #     },
-    #     description="Технические параметры заказа в JSON-формате",
-    #     json_schema_extra={"minProperties": 1}
-    # )
     factory_id: Optional[uuid.UUID] = Field(
         None,
         example="b2c3d4e5-6789-0123-4567-890123456789",
@@ -59,15 +49,15 @@ class OrderCreate(BaseModel):
             raise ValueError("Заказ должен ссылаться либо на генерацию, либо на товар")
         return self
 
-    # @field_validator('design_specs')
-    # @classmethod
-    # def validate_design_specs(cls, v: Dict) -> Dict:
-    #     """Валидация design_specs"""
-    #     required_fields = {'size', 'material'}
-    #     if not required_fields.issubset(v.keys()):
-    #         raise ValueError(f"Design specs must contain {required_fields}")
-    #     return v
-
+    @computed_field
+    @property
+    def webhooks(self) -> list[str]:
+        """Available webhook events for this resource"""
+        return [
+            "order.created",
+            "order.updated",
+            "order.completed"
+        ]
 
 class OrderBase(BaseModel):
     """Базовая схема для создания/обновления заказа."""
@@ -90,11 +80,11 @@ class OrderResponse(OrderBase):
     """Схема для возврата данных о заказе через API."""
     id: uuid.UUID = Field(...)
     status: OrderStatusValues = Field(...)
-    amount: float = Field(
+    amount: int = Field(
         ...,
-        example=1500.0,
+        example=150000,  # 1500.00 RUB
         ge=0,
-        description="Сумма заказа в рублях",
+        description="Order amount in kopecks",
     )
     created_at: datetime = Field(
         ...,
@@ -110,6 +100,42 @@ class OrderResponse(OrderBase):
         example="b2c3d4e5-6789-0123-4567-890123456789",
         description="ID пользователя-заказчика",
     )
+    links: Dict[str, Any] = Field(
+        default_factory=lambda: {
+            "self": {"href": "/orders/{id}"},
+            "factory": {"href": "/factories/{factory_id}"}
+        }
+    )
+
+    @computed_field
+    @property
+    def links(self) -> dict:
+        base = {
+            "self": {"href": f"/orders/{self.id}", "method": "GET"},
+            "update": {"href": f"/orders/{self.id}", "method": "PATCH"}
+        }
+        
+        if self.factory_id:
+            base["factory"] = {
+                "href": f"/factories/{self.factory_id}",
+                "method": "GET"
+            }
+            
+        if self.status == "created":
+            base["pay"] = {
+                "href": f"/orders/{self.id}/payments",
+                "method": "POST"
+            }
+            
+        return base
+    
+    @computed_field
+    @property
+    def rate_limit(self) -> dict:
+        return {
+            "remaining": {"header": "X-RateLimit-Remaining"},
+            "reset": {"header": "X-RateLimit-Reset"}
+        }
 
     model_config = ConfigDict(
         from_attributes=True,

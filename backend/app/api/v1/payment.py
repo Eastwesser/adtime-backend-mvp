@@ -44,6 +44,7 @@ async def create_payment(
         description: str = "Order payment",
         session: AsyncSession = Depends(get_db)
 ):
+    amount_kopecks = round(amount * 100)
     payment = await service.create_payment(
         session=session,
         order_id=order_id,

@@ -9,7 +9,7 @@ from uuid import UUID
 
 # from app.models.order import Order
 # from app.models.user import User
-from sqlalchemy import String, ForeignKey, JSON, Float, CheckConstraint
+from sqlalchemy import Integer, String, ForeignKey, JSON, Float, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -38,7 +38,7 @@ class MarketItem(Base):
     title: Mapped[str] = mapped_column(String(100))
     description: Mapped[str] = mapped_column(String(1000))
     item_type: Mapped[str] = mapped_column(String(50))
-    price: Mapped[float] = mapped_column(Float)
+    price: Mapped[int] = mapped_column(Integer)
     preview_url: Mapped[str] = mapped_column(String(500))
     specs: Mapped[dict] = mapped_column(JSON)
     rating: Mapped[float] = mapped_column(Float, default=0.0)

@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from app.core.errors import APIError, api_error_handler
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
@@ -8,6 +9,9 @@ from app.api.v1 import router as api_router
 from app.core.config import settings, YooKassaConfig
 from app.core.database import init_db
 from app.core.monitoring import setup_monitoring
+from fastapi.responses import JSONResponse
+from app.core.webhooks import webhook_manager
+from app.core import responses
 
 YooKassaConfig.setup(settings)
 
@@ -65,7 +69,14 @@ app = FastAPI(
         }
     ],
     redoc_url="/documentation",
+    swagger_ui_parameters={"defaultModelsExpandDepth": -1},
 )
+
+app.add_exception_handler(APIError, api_error_handler)
+app.add_exception_handler(HTTPException, lambda _, exc: JSONResponse(
+    status_code=exc.status_code,
+    content={"error": {"message": exc.detail, "code": "http_error"}}
+))
 
 # Setup monitoring and CORS
 setup_monitoring(app)
@@ -110,3 +121,10 @@ async def health_check():
         "redis": "connected"
     }
 
+# Add to lifespan
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    webhook_manager.register("order.created")(handle_order_webhook)
+    yield
+    

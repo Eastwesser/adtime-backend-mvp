@@ -11,7 +11,22 @@ class MarketItem(BaseModel):
     title: str = Field(..., max_length=100, example="Summer Sale Banner")
     description: str = Field(..., max_length=1000)
     item_type: ProductTypeValues = Field(..., example="banner")
-    price: float = Field(..., gt=0, example=49.99)
+    price: int = Field(
+        ...,
+        gt=0,
+        example=4999,
+        description="Price in kopecks (e.g., 4999 = 49.99 RUB)"
+    )
+    min_price: Optional[int] = Field(
+        None, 
+        ge=0,
+        description="Minimum price in kopecks"
+    )
+    max_price: Optional[int] = Field(
+        None,
+        gt=0,
+        description="Maximum price in kopecks"
+    )
     preview_url: str = Field(...)
     rating: float = Field(..., ge=0, le=5, example=4.5)
     designer_id: UUID = Field(...)

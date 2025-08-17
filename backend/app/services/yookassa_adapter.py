@@ -22,7 +22,7 @@ class YooKassaAdapter:
 
     async def create_payment(
             self,
-            amount: float,
+            amount: int,  # in kopecks
             order_id: str,
             description: str = "",
             return_url: str = None,
@@ -42,7 +42,7 @@ class YooKassaAdapter:
             Объект платежа от ЮKassa
         """
         params = {
-            "amount": {"value": amount, "currency": "RUB"},
+            "amount": {"value": amount / 100, "currency": "RUB"},
             "confirmation": {
                 "type": "redirect",
                 "return_url": return_url

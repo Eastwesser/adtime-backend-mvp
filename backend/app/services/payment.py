@@ -40,7 +40,7 @@ class PaymentService:
             self,
             session: AsyncSession,
             order_id: UUID,
-            amount: float,
+            amount: int,
             description: str = ""
     ) -> PaymentResponse:
         """Создание платежа с полной валидацией"""

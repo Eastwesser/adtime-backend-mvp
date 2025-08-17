@@ -70,8 +70,12 @@ async def login(
     )
 
 
-class EmailExistsError:
-    pass
+class EmailExistsError(HTTPException):
+    def __init__(self, email: str):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Email {email} is already registered"
+        )
 
 
 @router.post(
@@ -92,6 +96,9 @@ async def register(
         auth_service: AuthService = Depends(get_auth_service)
 ):
     """Register new user and return tokens"""
+    if await auth_service.email_exists(user_create.email):
+        raise EmailExistsError(user_create.email) 
+    
     try:
         user = await auth_service.register_user(user_create)
         

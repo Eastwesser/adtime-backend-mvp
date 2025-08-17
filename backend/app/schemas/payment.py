@@ -24,7 +24,7 @@ class PaymentCreate(BaseModel):
 
     Attributes:
         order_id (UUID): ID связанного заказа
-        amount (float): Сумма платежа в рублях (должна быть > 0)
+        amount (int): Сумма платежа в рублях (должна быть > 0)
         metadata (Optional[Dict]): Дополнительные данные платежа
     """
     order_id: uuid.UUID = Field(
@@ -32,11 +32,11 @@ class PaymentCreate(BaseModel):
         description="ID связанного заказа",
         example="a1b2c3d4-5678-9012-3456-789012345678"
     )
-    amount: float = Field(
+    amount: int = Field(
         ...,
         gt=0,
-        description="Сумма платежа в рублях",
-        example=1500.00
+        example=150000,  # 1500.00 RUB
+        description="Payment amount in kopecks",
     )
     metadata: Optional[Dict] = Field(
         None,
@@ -81,7 +81,7 @@ class PaymentResponse(PaymentCreate):
             "example": {
                 "id": "b2c3d4e5-6789-0123-4567-890123456789",
                 "order_id": "a1b2c3d4-5678-9012-3456-789012345678",
-                "amount": 1500.00,
+                "amount": 150000,
                 "external_id": "pay_123456789",
                 "status": "pending",
                 "created_at": "2023-01-01T12:00:00Z",
@@ -97,7 +97,7 @@ class PaymentNotification(BaseModel):
         event (str): Тип события (например, 'payment.succeeded')
         payment_id (str): ID платежа в ЮKassa (алиас 'object.id')
         status (PaymentStatus): Статус платежа
-        amount (float): Сумма платежа
+        amount (int): Сумма платежа
         metadata (Dict): Дополнительные данные платежа
     """
     event: str = Field(
@@ -116,10 +116,11 @@ class PaymentNotification(BaseModel):
         description="Статус платежа",
         example="succeeded"
     )
-    amount: float = Field(
+    amount: int = Field(
         ...,
-        description="Сумма платежа",
-        example=1500.00
+        gt=0,
+        example=150000,  # 1500.00 RUB
+        description="Payment amount in kopecks",
     )
     metadata: Dict = Field(
         ...,

@@ -1,6 +1,6 @@
 import uuid
 from typing import Annotated
-
+from fastapi import Request
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
@@ -184,11 +184,15 @@ async def get_marketplace_service(
     user_repo = UserRepository(session)
     return MarketplaceService(marketplace_repo, user_repo)
 
-
-async def get_rate_limiter() -> RateLimiter:
-    return RateLimiter(redis_client, "100/minute")
-
-
+async def get_rate_limiter(request: Request) -> RateLimiter:
+    """Dependency that checks rate limits"""
+    limiter = RateLimiter(
+        redis=redis_client,
+        key=f"rate_limit:{request.client.host}",  # Or use user_id if authenticated
+        limit="100/minute"
+    )
+    await limiter.check()
+    return limiter
 
 # Dependency type annotations
 AdminDep = Annotated[UserResponse, Depends(get_admin_user)]
@@ -205,7 +209,21 @@ RateLimiterDep = Annotated[RateLimiter, Depends(get_rate_limiter)]
 
 
 class UserService:
-    pass
+    def __init__(self, user_repo: UserRepository):
+        self.repo = user_repo
+
+    async def get_user_profile(self, user_id: uuid.UUID) -> UserResponse:
+        """Fetch user data with sensitive fields filtered out."""
+        user = await self.repo.get(user_id)
+        if not user:
+            raise NotFoundError("User")
+        return UserResponse.model_validate(user)
+
+    async def update_profile(self, user_id: UUID, data: dict) -> UserResponse:
+        """Update user profile (e.g., name, avatar)."""
+        # Add validation/logic here
+        await self.repo.update(user_id, data)
+        return await self.get_user_profile(user_id)
 
 
 async def get_user_service(session: AsyncSession = Depends(get_db)) -> UserService:

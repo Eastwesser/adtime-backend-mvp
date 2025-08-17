@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Optional
 
 # from app.models.order import Order
-from sqlalchemy import UUID, String, ForeignKey, JSON, Numeric, CheckConstraint
+from sqlalchemy import UUID, Integer, String, ForeignKey, JSON, Numeric, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -40,7 +40,7 @@ class Payment(Base):
         nullable=False
     )
     external_id: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False) # Stores amount in kopecks
     status: Mapped[str] = mapped_column(String(50), default="pending")
     currency: Mapped[str] = mapped_column(String(3), default="RUB")
     description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
