@@ -1,9 +1,11 @@
+from app.schemas.schemas import ValidationErrorResponse
 from fastapi import status
-from app.schemas.errors import ErrorResponse, ValidationErrorResponse
+from app.schemas.errors import ErrorResponse
+from app.core.errors import ValidationError
 
 STANDARD_RESPONSES = {
     status.HTTP_400_BAD_REQUEST: {
-        "model": ValidationErrorResponse,
+        "model": ValidationError,
         "description": "Validation Error"
     },
     status.HTTP_401_UNAUTHORIZED: {
@@ -17,6 +19,9 @@ STANDARD_RESPONSES = {
     status.HTTP_404_NOT_FOUND: {
         "model": ErrorResponse,
         "description": "Not Found"
+    },
+    status.HTTP_422_UNPROCESSABLE_ENTITY: {
+        "model": ValidationErrorResponse,
     },
     status.HTTP_429_TOO_MANY_REQUESTS: {
         "model": ErrorResponse,

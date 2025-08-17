@@ -247,3 +247,15 @@ class AuthService:
             raise HTTPException(status_code=401, detail="Token expired")
         except JWTError:
             raise HTTPException(status_code=401, detail="Invalid token")
+
+    async def email_exists(self, email: str) -> bool:
+        """Check if email already exists in database.
+        
+        Args:
+            email: Email to check
+            
+        Returns:
+            bool: True if email exists, False otherwise
+        """
+        user = await self.user_repo.get_by_email(email)
+        return user is not None

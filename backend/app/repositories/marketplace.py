@@ -12,7 +12,7 @@ from app.models.marketplace import MarketItem
 from app.models.order import Order
 from .base import BaseRepository
 from ..schemas import CartItem
-from ..services import PaymentService
+
 from ..services.notifications import NotificationService
 
 
@@ -50,7 +50,7 @@ class MarketplaceRepository(BaseRepository[MarketItem]):
     def __init__(
             self,
             session: AsyncSession,
-            payment_service: PaymentService,
+            payment_service: "PaymentService",
             notification_service: NotificationService,
     ):
         super().__init__(MarketItem, session)  # Передаем session в родительский класс

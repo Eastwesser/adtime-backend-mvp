@@ -4,6 +4,7 @@ from app.core.errors import NotFoundError, PermissionDeniedError
 from app.core.security import create_access_token
 from app.repositories.user import UserRepository
 from app.schemas.user import UserResponse
+from typing import Optional
 
 class AdminService:
     """Handles god-mode operations with audit logging"""

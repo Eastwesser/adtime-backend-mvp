@@ -6,7 +6,8 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from functools import lru_cache
+from app.core.errors import NotFoundError
+from app.core.webhooks import WebhookManager
 from app.core.database import async_session
 from app.core.config import settings
 from app.core.rate_limiter import RateLimiter
@@ -29,6 +30,7 @@ from app.services.notifications import NotificationService
 from app.services.order import OrderService
 from app.services.payment import PaymentService
 from app.services.subscription import SubscriptionService
+from app.services.admin import AdminService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
@@ -84,7 +86,7 @@ async def get_current_user(
         raise credentials_exception
 
     user_repo = UserRepository(session)
-    user = await user_repo.get(session, uuid.UUID(user_id))
+    user = await user_repo.get(uuid.UUID(user_id), include_deleted=False)
     if user is None:
         raise credentials_exception
     return UserResponse.model_validate(user)
@@ -194,8 +196,17 @@ async def get_rate_limiter(request: Request) -> RateLimiter:
     await limiter.check()
     return limiter
 
+async def get_webhook_manager() -> WebhookManager:
+    return WebhookManager()
+
+async def get_admin_service(session: AsyncSession = Depends(get_db)) -> AdminService:
+    user_repo = UserRepository(session)
+    return AdminService(user_repo)
+
+
 # Dependency type annotations
 AdminDep = Annotated[UserResponse, Depends(get_admin_user)]
+AdminServiceDep = Annotated[AdminService, Depends(get_admin_service)]
 PaymentServiceDep = Annotated[PaymentService, Depends(get_payment_service)]
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 MarketplaceServiceDep = Annotated[MarketplaceService, Depends(get_marketplace_service)]
@@ -206,7 +217,7 @@ SubscriptionServiceDep = Annotated[SubscriptionService, Depends(get_subscription
 KandinskyAPIDep = Annotated[KandinskyAPI, Depends(get_kandinsky_api)]
 NotificationServiceDep = Annotated[NotificationService, Depends(get_notification_service)]
 RateLimiterDep = Annotated[RateLimiter, Depends(get_rate_limiter)]
-
+WebhookManagerDep = Annotated[WebhookManager, Depends(get_webhook_manager)]
 
 class UserService:
     def __init__(self, user_repo: UserRepository):
@@ -219,7 +230,7 @@ class UserService:
             raise NotFoundError("User")
         return UserResponse.model_validate(user)
 
-    async def update_profile(self, user_id: UUID, data: dict) -> UserResponse:
+    async def update_profile(self, user_id: uuid.UUID, data: dict) -> UserResponse:
         """Update user profile (e.g., name, avatar)."""
         # Add validation/logic here
         await self.repo.update(user_id, data)
@@ -229,4 +240,3 @@ class UserService:
 async def get_user_service(session: AsyncSession = Depends(get_db)) -> UserService:
     user_repo = UserRepository(session)
     return UserService(user_repo)
-

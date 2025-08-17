@@ -100,12 +100,12 @@ class OrderResponse(OrderBase):
         example="b2c3d4e5-6789-0123-4567-890123456789",
         description="ID пользователя-заказчика",
     )
-    links: Dict[str, Any] = Field(
-        default_factory=lambda: {
-            "self": {"href": "/orders/{id}"},
-            "factory": {"href": "/factories/{factory_id}"}
-        }
-    )
+    # links: Dict[str, Any] = Field(
+    #     default_factory=lambda: {
+    #         "self": {"href": "/orders/{id}"},
+    #         "factory": {"href": "/factories/{factory_id}"}
+    #     }
+    # )
 
     @computed_field
     @property
