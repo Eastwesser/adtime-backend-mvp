@@ -1,5 +1,6 @@
 import uuid
 from typing import Annotated
+from app.repositories.chat import ChatRepository
 from fastapi import Request
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -130,20 +131,31 @@ async def get_generation_service(
         kandinsky_api
     )
 
+async def get_chat_repo(session: AsyncSession = Depends(get_db)) -> ChatRepository:
+    return ChatRepository(session)
+
+async def get_order_repo(session: AsyncSession = Depends(get_db)) -> OrderRepository:
+    return OrderRepository(session)
+
+async def get_generation_repo(session: AsyncSession = Depends(get_db)) -> GenerationRepository:
+    return GenerationRepository(session)
 
 async def get_order_service(
-        session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(get_db),
+    chat_repo: ChatRepository = Depends(get_chat_repo),
+    order_repo: OrderRepository = Depends(get_order_repo),
+    payment_service: PaymentService = Depends(get_payment_service),
+    generation_repo: GenerationRepository = Depends(get_generation_repo)
 ) -> OrderService:
-    order_repo = OrderRepository(session)
-    payment_service = await get_payment_service(session)
-    generation_repo = GenerationRepository(session)
     return OrderService(
-        session,
-        order_repo,
-        payment_service,
-        generation_repo
+        session=session,
+        chat_repo=chat_repo,
+        order_repo=order_repo,
+        payment_service=payment_service,
+        generation_repo=generation_repo,
     )
 
+OrderServiceDep = Depends(get_order_service)
 
 async def get_subscription_service(
         session: AsyncSession = Depends(get_db)

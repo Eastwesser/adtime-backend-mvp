@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional, List, Any, Sequence
 from uuid import UUID
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy import select, Row, RowMapping
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User 
@@ -68,6 +68,7 @@ class OrderService:
         self.order_repo = order_repo
         self.payment_service = payment_service
         self.generation_repo = generation_repo
+
 
     async def create_order(
             self,
@@ -173,6 +174,12 @@ class OrderService:
             ValueError: Если заказ не найден
             PermissionError: Если пользователь не имеет доступа к заказу
         """
+        if not self.chat_repo:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="Chat functionality not implemented"
+            )
+
         # Проверяем существование заказа и доступ пользователя
         order = await self.get_order(order_id)
         if order.user_id != user_id:
@@ -190,24 +197,8 @@ class OrderService:
             "message": message,
             "attachments": attachments or []
         }
-
-        # # В реальной реализации здесь будет вызов репозитория для сохранения сообщения
-        # # Например:
-        # # db_message = await self.chat_repo.create(message_data)
-        # # return ChatMessageSchema.model_validate(db_message)
-        #
-        # # Заглушка для примера:
-        # return ChatMessageSchema(
-        #     id=uuid.uuid4(),
-        #     order_id=order_id,
-        #     sender_id=user_id,
-        #     message=message,
-        #     attachments=attachments or [],
-        #     created_at=datetime.now(),
-        #     is_read=False
-        # )
         db_message = await self.chat_repo.create(message_data)
-        return ChatMessageSchema.from_orm(db_message)
+        return ChatMessageSchema.model_validate(db_message)
 
     async def get_order_messages(
             self,
@@ -227,9 +218,14 @@ class OrderService:
         Исключения:
             ValueError: Если заказ не найден
         """
+        if not self.chat_repo:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="Chat functionality not implemented"
+            )
         # Проверяем существование заказа
         messages = await self.chat_repo.get_by_order(order_id, limit=limit)
-        return [ChatMessageSchema.from_orm(m) for m in messages]
+        return [ChatMessageSchema.model_validate(m) for m in messages]
 
         # В реальной реализации здесь будет запрос к репозиторию:
         # messages = await self.chat_repo.get_by_order(order_id, limit=limit)
@@ -264,6 +260,14 @@ class OrderService:
 
         result = await self.session.execute(query)
         return result.scalars().all()
+        
+
+    async def get_order_with_messages(self, order_id: UUID) -> Order:
+        """Get order details (messages can be loaded separately if needed)"""
+        order = await self.get_order(order_id)
+        # Пока просто возвращаем заказ, сообщения можно добавить позже по требованию
+        return order
+        
 
     async def get_order(self, order_id: UUID) -> Order:
         """Получение заказа по ID"""
@@ -302,7 +306,7 @@ class OrderService:
                 order_id,
                 {
                     "factory_id": factory_id,
-                    "status": OrderStatus.PRODUCTION, 
+                    "status": OrderStatus.PRODUCTION,
                     "production_deadline": datetime.now() + timedelta(days=7)
                 }
             )
@@ -436,6 +440,11 @@ class OrderService:
 
     async def mark_message_as_read(self, message_id: UUID, user_id: UUID) -> None:
         """Помечает сообщение как прочитанное."""
+        if not self.chat_repo:
+            raise HTTPException(
+                status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                detail="Chat functionality not implemented"
+            )
         message = await self.chat_repo.get(message_id)
         if not message:
             raise HTTPException(status_code=404, detail="Message not found")
