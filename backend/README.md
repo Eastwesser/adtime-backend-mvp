@@ -1,11 +1,5 @@
 # AdTime Backend API
 
-Clear all, before work:
-
-```bash
-docker-compose down --remove-orphans -v
-docker system prune -f
-```
 Build:
 ```bash
 docker-compose up --build  # Builds images and starts all services
@@ -15,24 +9,24 @@ docker-compose up --build  # Builds images and starts all services
 ```
 
 Alembic DB Migrations:
-
 ```bash
 docker-compose run backend alembic upgrade head
+```
 
+Complete start:
+```bash
 # While server is ONLINE
 docker-compose exec backend alembic revision --autogenerate -m "fix_relationships"
 docker-compose exec backend alembic upgrade head
 
-docker-compose down -v
+docker-compose down -v --remove-orphans
 docker volume prune -f
 docker-compose up -d --build
 docker-compose exec backend alembic upgrade head
 docker-compose up
-
 ```
 
 Run:
-
 ```bash
 docker-compose down -v && docker-compose up --build
 
@@ -46,13 +40,12 @@ docker-compose up
 
 
 ## Project Tree:
-
 To get it run : 
-
 ```bash
 tree -L 5
 ```
 
+Our project's current tree:
 ```text
 .
 ├── backend
@@ -60,33 +53,60 @@ tree -L 5
 │   ├── app
 │   │   ├── api
 │   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   └── __init__.cpython-312.pyc
 │   │   │   └── v1
 │   │   │       ├── admin.py
 │   │   │       ├── auth.py
 │   │   │       ├── generate.py
 │   │   │       ├── __init__.py
 │   │   │       ├── marketplace.py
+│   │   │       ├── orders.py
 │   │   │       ├── payment.py
+│   │   │       ├── production.py
+│   │   │       ├── __pycache__
 │   │   │       └── users.py
 │   │   ├── core
 │   │   │   ├── chat.py
 │   │   │   ├── config.py
+│   │   │   ├── currency.py
 │   │   │   ├── database.py
 │   │   │   ├── dependencies.py
+│   │   │   ├── errors.py
+│   │   │   ├── factory_client.py
 │   │   │   ├── __init__.py
 │   │   │   ├── logger
 │   │   │   │   ├── __init__.py
-│   │   │   │   └── logger.py
+│   │   │   │   ├── logger.py
+│   │   │   │   └── __pycache__
 │   │   │   ├── monitoring
 │   │   │   │   ├── __init__.py
 │   │   │   │   ├── monitoring.py
-│   │   │   │   └── prometheus.yml
+│   │   │   │   ├── prometheus.yml
+│   │   │   │   └── __pycache__
 │   │   │   ├── order_status.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── config.cpython-312.pyc
+│   │   │   │   ├── database.cpython-312.pyc
+│   │   │   │   ├── dependencies.cpython-312.pyc
+│   │   │   │   ├── errors.cpython-312.pyc
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   ├── order_status.cpython-312.pyc
+│   │   │   │   ├── rate_limiter.cpython-312.pyc
+│   │   │   │   ├── redis.cpython-312.pyc
+│   │   │   │   ├── responses.cpython-312.pyc
+│   │   │   │   ├── security.cpython-312.pyc
+│   │   │   │   ├── storage.cpython-312.pyc
+│   │   │   │   ├── webhooks.cpython-312.pyc
+│   │   │   │   └── websocket_manager.cpython-312.pyc
 │   │   │   ├── rate_limiter.py
 │   │   │   ├── redis.py
+│   │   │   ├── responses.py
 │   │   │   ├── security.py
+│   │   │   ├── statuses.py
 │   │   │   ├── storage.py
 │   │   │   ├── testing.py
+│   │   │   ├── webhooks.py
 │   │   │   └── websocket_manager.py
 │   │   ├── __init__.py
 │   │   ├── main.py
@@ -101,8 +121,18 @@ tree -L 5
 │   │   │   ├── order.py
 │   │   │   ├── payment.py
 │   │   │   ├── __pycache__
+│   │   │   │   ├── base.cpython-312.pyc
+│   │   │   │   ├── chat.cpython-312.pyc
 │   │   │   │   ├── factory.cpython-312.pyc
-│   │   │   │   └── __init__.cpython-312.pyc
+│   │   │   │   ├── generation.cpython-312.pyc
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   ├── marketplace.cpython-312.pyc
+│   │   │   │   ├── notifications.cpython-312.pyc
+│   │   │   │   ├── order.cpython-312.pyc
+│   │   │   │   ├── payment.cpython-312.pyc
+│   │   │   │   ├── review.cpython-312.pyc
+│   │   │   │   ├── subscription.cpython-312.pyc
+│   │   │   │   └── user.cpython-312.pyc
 │   │   │   ├── review.py
 │   │   │   ├── subscription.py
 │   │   │   └── user.py
@@ -119,6 +149,18 @@ tree -L 5
 │   │   │   ├── notification.py
 │   │   │   ├── order.py
 │   │   │   ├── payment.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── base.cpython-312.pyc
+│   │   │   │   ├── chat.cpython-312.pyc
+│   │   │   │   ├── factory.cpython-312.pyc
+│   │   │   │   ├── generation.cpython-312.pyc
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   ├── marketplace.cpython-312.pyc
+│   │   │   │   ├── notification.cpython-312.pyc
+│   │   │   │   ├── order.cpython-312.pyc
+│   │   │   │   ├── payment.cpython-312.pyc
+│   │   │   │   ├── subscription.cpython-312.pyc
+│   │   │   │   └── user.cpython-312.pyc
 │   │   │   ├── subscription.py
 │   │   │   └── user.py
 │   │   ├── schemas
@@ -131,9 +173,24 @@ tree -L 5
 │   │   │   ├── notifications.py
 │   │   │   ├── order.py
 │   │   │   ├── payment.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── admin.cpython-312.pyc
+│   │   │   │   ├── auth.cpython-312.pyc
+│   │   │   │   ├── errors.cpython-312.pyc
+│   │   │   │   ├── generation.cpython-312.pyc
+│   │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   │   ├── marketplace.cpython-312.pyc
+│   │   │   │   ├── notifications.cpython-312.pyc
+│   │   │   │   ├── order.cpython-312.pyc
+│   │   │   │   ├── payment.cpython-312.pyc
+│   │   │   │   ├── schemas.cpython-312.pyc
+│   │   │   │   ├── subscription.cpython-312.pyc
+│   │   │   │   └── user.cpython-312.pyc
+│   │   │   ├── schemas.py
 │   │   │   ├── subscription.py
 │   │   │   └── user.py
 │   │   └── services
+│   │       ├── admin.py
 │   │       ├── auth.py
 │   │       ├── base.py
 │   │       ├── generation.py
@@ -144,6 +201,19 @@ tree -L 5
 │   │       ├── order.py
 │   │       ├── payment.py
 │   │       ├── production.py
+│   │       ├── __pycache__
+│   │       │   ├── admin.cpython-312.pyc
+│   │       │   ├── auth.cpython-312.pyc
+│   │       │   ├── generation.cpython-312.pyc
+│   │       │   ├── __init__.cpython-312.pyc
+│   │       │   ├── kandinsky.cpython-312.pyc
+│   │       │   ├── marketplace.cpython-312.pyc
+│   │       │   ├── notifications.cpython-312.pyc
+│   │       │   ├── order.cpython-312.pyc
+│   │       │   ├── payment.cpython-312.pyc
+│   │       │   ├── subscription.cpython-312.pyc
+│   │       │   ├── user.cpython-312.pyc
+│   │       │   └── yookassa_adapter.cpython-312.pyc
 │   │       ├── subscription.py
 │   │       ├── user.py
 │   │       └── yookassa_adapter.py
@@ -157,65 +227,132 @@ tree -L 5
 │   │   ├── README
 │   │   ├── script.py.mako
 │   │   └── versions
-│   │       └── 2217af24be5b_initial_migration.py
+│   │       ├── 222222222222_consolidated_user_timestamps.py
+│   │       ├── 333333333333_convert_to_kopecks.py
+│   │       ├── 466b80ceb431_initial_migration.py
+│   │       └── __pycache__
+│   │           ├── 1d3e005ea667_add_created_at_to_users.cpython-312.pyc
+│   │           ├── 222222222222_consolidated_user_timestamps.cpython-312.pyc
+│   │           ├── 333333333333_convert_to_kopecks.cpython-312.pyc
+│   │           ├── 3d2db5f4c33c_make_created_at_timezone_aware.cpython-312.pyc
+│   │           ├── 466b80ceb431_initial_migration.cpython-312.pyc
+│   │           ├── 863ffe69d8af_add_created_at_to_users.cpython-312.pyc
+│   │           ├── 88684a029245_fix_created_at_default.cpython-312.pyc
+│   │           ├── 8ca3efe506e0_fix_generation_order_relationship.cpython-312.pyc
+│   │           ├── abc0300889f0_convert_currency_fields_to_kopecks.cpython-312.pyc
+│   │           ├── consolidated_user_timestamps.cpython-312.pyc
+│   │           ├── convert_currency_to_kopecks.cpython-312.pyc
+│   │           └── ee7e2eccb06f_fix_relationships.cpython-312.pyc
 │   ├── poetry.lock
+│   ├── private.pem
+│   ├── public.pem
 │   ├── __pycache__
-│   │   └── __init__.cpython-312.pyc
 │   ├── pyproject.toml
 │   ├── README.md
 │   ├── requirements-dev.txt
 │   ├── requirements.txt
 │   ├── run_migrations.py
-│   └── run_migrations.sh
+│   ├── run_migrations.sh
+│   ├── tests
+│   │   ├── conftest.py
+│   │   ├── test_order.py
+│   │   ├── test_payments.py
+│   │   └── test_production.py
+│   └── venv
+│       ├── bin
+│       │   ├── activate
+│       │   ├── activate.csh
+│       │   ├── activate.fish
+│       │   ├── Activate.ps1
+│       │   ├── alembic
+│       │   ├── black
+│       │   ├── blackd
+│       │   ├── distro
+│       │   ├── dmypy
+│       │   ├── dotenv
+│       │   ├── email_validator
+│       │   ├── faker
+│       │   ├── fastapi
+│       │   ├── httpx
+│       │   ├── isort
+│       │   ├── isort-identify-imports
+│       │   ├── jp.py
+│       │   ├── mako-render
+│       │   ├── mypy
+│       │   ├── mypyc
+│       │   ├── netaddr
+│       │   ├── normalizer
+│       │   ├── pip
+│       │   ├── pip3
+│       │   ├── pip3.12
+│       │   ├── pygmentize
+│       │   ├── pyrsa-decrypt
+│       │   ├── pyrsa-encrypt
+│       │   ├── pyrsa-keygen
+│       │   ├── pyrsa-priv2pub
+│       │   ├── pyrsa-sign
+│       │   ├── pyrsa-verify
+│       │   ├── py.test
+│       │   ├── pytest
+│       │   ├── python -> python3
+│       │   ├── python3 -> /usr/bin/python3
+│       │   ├── python3.12 -> python3
+│       │   ├── stubgen
+│       │   ├── stubtest
+│       │   └── uvicorn
+│       ├── include
+│       │   ├── python3.12
+│       │   └── site
+│       │       └── python3.12
+│       ├── lib
+│       │   └── python3.12
+│       │       └── site-packages
+│       ├── lib64 -> lib
+│       └── pyvenv.cfg
 ├── docker-compose.yml
 ├── Makefile
 ├── README.md
 ├── requirements-dev.txt
 └── requirements.txt
 
-18 directories, 100 files
+38 directories, 229 files
 ```
 
 ## Ключевые файлы:
 
-### Конфигурация:
+## Конфигурация (Configuration):
+    .env - in root
+    backend/app/core/config.py - main config
+    backend/alembic.ini - Migrations config
 
-    .env - переменные окружения
-    config.py - настройки приложения
-    alembic.ini - конфиг миграций
+## Основное приложение (Main Application):
+    backend/app/main.py - FastAPI entry point
+    backend/app/core/database.py - PostgreSQL connection
+    backend/app/core/redis.py - Redis connection
 
-### Основное приложение:
+## API Endpoints:
+    backend/app/api/v1/auth.py - Authentication
+    backend/app/api/v1/marketplace.py - Marketplace
+    backend/app/api/v1/payment.py - Payments
+    backend/app/api/v1/generate.py - Image generation
+    backend/app/api/v1/orders.py - Orders
+    backend/app/api/v1/users.py - Users
+    backend/app/api/v1/admin.py - Admin
 
-    main.py - точка входа FastAPI
-    database.py - подключение к PostgreSQL
-    celery.py - настройка Celery
+## Data Layer:
+    Модели: backend/app/models/
+    Репозитории: backend/app/repositories/
 
-### API Endpoints:
+## Бизнес-логика (Business Logic / Use Cases):
+    Сервисы: backend/app/services/ ✓ (complete set)
 
-    auth.py - аутентификация
-    marketplace.py - маркетплейс
-    payment.py - платежи
-    generate.py - генерация изображений
+## Документация (Documentation):
+    Схемы Pydantic: backend/app/schemas/
+    Swagger: Auto-generated from FastAPI
 
-### Data Layer:
-
-    Модели в models/
-    Репозитории в repositories/
-
-### Бизнес-логика:
-
-    Сервисы в services/
-    Фоновые задачи в tasks/
-
-### Документация:
-
-    Схемы Pydantic в schemas/
-    Описание API в Swagger (автогенерация)
-
-### Инфраструктура:
-
-    Dockerfile - образ backend
-    docker-compose.yml - все сервисы
+## Инфраструктура (Infrastructure):
+    backend/Dockerfile - Backend image
+    docker-compose.yml - All services
 
 ## QUERY EXAMPLE
 ```bash
@@ -335,8 +472,3 @@ grep -r "Enum" app/ | wc -l
 ```bash
 sudo find . -name "__pycache__" -exec rm -rf {} +
 ```
-
-docker-compose down -v --remove-orphans
-docker volume prune -f
-docker-compose up -d postgres redis
-docker-compose run backend alembic upgrade head
