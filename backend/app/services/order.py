@@ -7,6 +7,7 @@ from typing import Optional, List, Any, Sequence
 from uuid import UUID
 
 from fastapi import HTTPException, status
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select, Row, RowMapping
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User 
@@ -16,7 +17,6 @@ from app.repositories.order import OrderRepository
 from app.schemas.order import OrderCreate, OrderResponse, ChatMessageSchema, OrderUpdate
 from app.services.payment import PaymentService, logger
 from ..core.monitoring.monitoring import ORDER_METRICS
-from app.core.order_status import OrderStatus, StatusValues, OrderStatusHelper
 from ..models import Order
 from app.core.order_status import (
     OrderStatus,
@@ -254,7 +254,7 @@ class OrderService:
         query = select(Order).where(Order.user_id == user_id)
 
         if status:
-            if status not in OrderStatusValues.__args__:
+            if status not in StatusValues.__args__:
                 raise ValueError(f"Invalid status: {status}")
             query = query.where(Order.status == status)
 
@@ -463,7 +463,7 @@ class OrderService:
 
         try:
             # Validate status string
-            if new_status not in OrderStatusValues.__args__:
+            if status not in StatusValues.__args__:
                 raise ValueError(f"Invalid status: {new_status}")
 
             # Валидация прав и переходов
@@ -490,4 +490,28 @@ class OrderService:
         except ValueError as e:
             logger.warning(f"Invalid status transition: {str(e)}")
             raise HTTPException(400, str(e))
-        
+
+
+# class ChatMessageCreate(BaseModel):
+#     """Схема для создания нового сообщения в чате заказа."""
+#     message: str = Field(
+#         ...,
+#         example="Когда будет готов мой заказ?",
+#         description="Текст сообщения",
+#         min_length=1,
+#         max_length=2000
+#     )
+#     attachments: Optional[List[str]] = Field(
+#         default=None,
+#         example=["https://storage.example.com/files/123.pdf"],
+#         description="Ссылки на прикрепленные файлы"
+#     )
+
+#     model_config = ConfigDict(
+#         json_schema_extra={
+#             "example": {
+#                 "message": "Когда будет готов мой заказ?",
+#                 "attachments": ["https://storage.example.com/files/123.pdf"]
+#             }
+#         }
+#     )

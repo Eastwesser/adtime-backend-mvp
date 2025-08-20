@@ -17,7 +17,8 @@ from app.schemas.marketplace import (
 
 
 router = APIRouter(
-    prefix="/marketplace",
+    # prefix="/marketplace",
+    prefix="",
     tags=["Marketplace"],
     responses={404: {"description": "Not found"}}
 )

@@ -14,7 +14,8 @@ from app.schemas.generation import (
 )
 
 router = APIRouter(
-    prefix="/generate",
+    # prefix="/generate",
+    prefix="",
     tags=["Generations"],
     responses={429: {"description": "Rate limit exceeded"}}
 )

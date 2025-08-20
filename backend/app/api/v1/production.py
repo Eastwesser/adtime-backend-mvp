@@ -4,7 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.services.production import ProductionService
 from app.core.dependencies import get_db, ProductionServiceDep
 
-router = APIRouter(prefix="/production", tags=["Production"])
+router = APIRouter(
+    # prefix="/production",
+    prefix="",  
+    tags=["Production"],
+)
 
 @router.post("/orders/{order_id}/assign")
 async def assign_order(

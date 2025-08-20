@@ -1,26 +1,27 @@
-import uuid
+from uuid import UUID
 from datetime import datetime
 from typing import Any, Optional, Dict, List, Literal
 
 from pydantic import BaseModel, Field, ConfigDict, computed_field, model_validator, field_validator
-from app.core.order_status import OrderStatus  # Add this import
-# Define status values as Literal type
+from app.core.order_status import OrderStatus
+
+
 OrderStatusValues = Literal[OrderStatus.CREATED, "paid", "production", "shipped", "completed", "cancelled"]
 
 class OrderCreate(BaseModel):
     """Схема для создания нового заказа."""
-    generation_id: Optional[uuid.UUID] = Field(
+    generation_id: Optional[UUID] = Field(
         None,
         example="a1b2c3d4-5678-9012-3456-789012345678",
         description="ID связанной генерации изображения (если требуется генерация)",
         json_schema_extra={"nullable": True}
     )
-    factory_id: Optional[uuid.UUID] = Field(
+    factory_id: Optional[UUID] = Field(
         None,
         example="b2c3d4e5-6789-0123-4567-890123456789",
         description="ID фабрики для производства (если известен)",
     )
-    market_item_id: Optional[uuid.UUID] = Field(
+    market_item_id: Optional[UUID] = Field(
         default=None,
         example="c3d4e5f6-7890-1234-5678-901234567890",
         description="ID товара из маркетплейса (если заказ на готовый продукт)",
@@ -61,7 +62,7 @@ class OrderCreate(BaseModel):
 
 class OrderBase(BaseModel):
     """Базовая схема для создания/обновления заказа."""
-    generation_id: Optional[uuid.UUID] = Field(
+    generation_id: Optional[UUID] = Field(
         None,
         example="a1b2c3d4-5678-9012-3456-789012345678",
         description="ID связанной генерации изображения",
@@ -78,7 +79,7 @@ class OrderBase(BaseModel):
 
 class OrderResponse(OrderBase):
     """Схема для возврата данных о заказе через API."""
-    id: uuid.UUID = Field(...)
+    id: UUID = Field(...)
     status: OrderStatusValues = Field(...)
     amount: int = Field(
         ...,
@@ -95,7 +96,7 @@ class OrderResponse(OrderBase):
         example="2026-01-10T12:00:00Z",
         description="Планируемая дата завершения производства",
     )
-    user_id: uuid.UUID = Field(
+    user_id: UUID = Field(
         ...,
         example="b2c3d4e5-6789-0123-4567-890123456789",
         description="ID пользователя-заказчика",
@@ -174,17 +175,17 @@ class OrderUpdate(BaseModel):
 
 class ChatMessageSchema(BaseModel):
     """Схема сообщения в чате заказа."""
-    id: uuid.UUID = Field(
+    id: UUID = Field(
         ...,
         example="d3e4f5g6-7890-1234-5678-901234567890",
         description="Уникальный идентификатор сообщения"
     )
-    order_id: uuid.UUID = Field(
+    order_id: UUID = Field(
         ...,
         example="a1b2c3d4-5678-9012-3456-789012345678",
         description="ID связанного заказа"
     )
-    sender_id: uuid.UUID = Field(
+    sender_id: UUID = Field(
         ...,
         example="b2c3d4e5-6789-0123-4567-890123456789",
         description="ID отправителя (пользователя)"
@@ -258,6 +259,30 @@ class OrderWithMessages(OrderResponse):
                         "is_read": True
                     }
                 ]
+            }
+        }
+    )
+
+class ChatMessageCreate(BaseModel):
+    """Схема для создания нового сообщения в чате заказа."""
+    message: str = Field(
+        ...,
+        example="Когда будет готов мой заказ?",
+        description="Текст сообщения",
+        min_length=1,
+        max_length=2000
+    )
+    attachments: Optional[List[str]] = Field(
+        default=None,
+        example=["https://storage.example.com/files/123.pdf"],
+        description="Ссылки на прикрепленные файлы"
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "message": "Когда будет готов мой заказ?",
+                "attachments": ["https://storage.example.com/files/123.pdf"]
             }
         }
     )

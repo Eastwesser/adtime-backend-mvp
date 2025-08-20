@@ -13,7 +13,8 @@ from app.core.dependencies import (
 from app.schemas.payment import PaymentResponse
 
 router = APIRouter(
-    prefix="/payments",
+    # prefix="/payments",
+    prefix="",
     tags=["Payments"],
     responses={404: {"description": "Not found"}}
 )

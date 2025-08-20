@@ -12,7 +12,11 @@ from app.core.dependencies import (
 from app.services.admin import AdminService
 from app.services.generation import GenerationService
 
-router = APIRouter(prefix="/admin", tags=["Admin"])
+router = APIRouter(
+    # prefix="/admin",
+    prefix="", 
+    tags=["Admin"],
+)
 
 STANDARD_RESPONSES = {
     status.HTTP_200_OK: {"description": "Success"},
