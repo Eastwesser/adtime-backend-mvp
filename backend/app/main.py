@@ -1,19 +1,52 @@
 from contextlib import asynccontextmanager
 
-from app.core.errors import APIError, api_error_handler
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 
 from app.api.v1 import router as api_router
 from app.core.config import settings, YooKassaConfig
 from app.core.database import init_db
+from app.core.errors import APIError, api_error_handler
 from app.core.monitoring import setup_monitoring
+from app.core.webhooks import webhook_manager
+from app.core import redis
+
+YooKassaConfig.setup(settings)
+
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
+import redis.asyncio as redis
+
+from app.core.errors import APIError, api_error_handler
+from app.api.v1 import router as api_router
+from app.core.config import settings, YooKassaConfig
+from app.core.database import init_db, async_session
+from app.core.monitoring import setup_monitoring
 from app.core.webhooks import webhook_manager
 from app.core import responses
 
-YooKassaConfig.setup(settings)
+# Health check functions
+async def check_database_health():
+    try:
+        async with async_session() as session:
+            await session.execute(text("SELECT 1"))
+        return "connected"
+    except Exception:
+        return "disconnected"
+
+async def check_redis_health():
+    try:
+        redis_client = redis.Redis.from_url(settings.REDIS_URL)
+        await redis_client.ping()
+        await redis_client.close()
+        return "connected"
+    except Exception:
+        return "disconnected"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -111,15 +144,32 @@ async def root():
     return {"status": "ok", "version": settings.API_VERSION}
 
 
+# @app.get("/health", tags=["System"])
+# async def health_check():
+#     """System health endpoint"""
+#     return {
+#         "status": "healthy",
+#         "version": settings.API_VERSION,
+#         "database": "connected",
+#         "redis": "connected"
+#     }
+
 @app.get("/health", tags=["System"])
-async def health_check():
-    """System health endpoint"""
+async def system_health_check():
+    """Overall system health endpoint with real checks"""
+    db_status = await check_database_health()
+    redis_status = await check_redis_health()
+    
+    overall_status = "healthy" if db_status == "connected" and redis_status == "connected" else "unhealthy"
+    
     return {
-        "status": "healthy",
+        "status": overall_status,
         "version": settings.API_VERSION,
-        "database": "connected",
-        "redis": "connected"
+        "database": db_status,
+        "redis": redis_status
     }
+
+
 
 # Add to lifespan
 @asynccontextmanager

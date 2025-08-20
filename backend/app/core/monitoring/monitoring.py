@@ -1,6 +1,5 @@
-from http.client import HTTPException
 from time import time
-from fastapi import Request, Response
+from fastapi import Request, Response, HTTPException
 from prometheus_client import Counter, Histogram, generate_latest, REGISTRY
 
 # Unified metric definitions
@@ -57,8 +56,9 @@ def setup_monitoring(app):
             media_type="text/plain"
         )
 
-    @app.get("/health")
-    async def health_check():
+    @app.get("/metrics/health", include_in_schema=False)
+    async def metrics_health_check():
+        """Health check specifically for metrics collection"""
         try:
             generate_latest(REGISTRY)
             return {"status": "healthy", "metrics": "available"}

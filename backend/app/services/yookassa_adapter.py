@@ -25,7 +25,7 @@ class YooKassaAdapter:
             amount: int,  # in kopecks
             order_id: str,
             description: str = "",
-            return_url: str = None,
+            return_url: str = None, # change
             metadata: Dict[str, Any] = None
     ) -> YooPaymentResponse:
         """
