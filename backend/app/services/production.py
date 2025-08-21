@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from tenacity import stop_after_attempt, wait_exponential, retry
 
-from app.core.monitoring.monitoring import ORDER_STATUS_TRANSITIONS
+from app.core.monitoring.monitoring import ORDER_METRICS
 from app.models.factory import Factory
 from app.core.logger import get_logger
 from app.models.order import OrderStatus, Order
@@ -277,7 +277,7 @@ class ProductionService:
             factory = await self._get_factory_for_order(order)
             result = await self._call_factory_api(factory, order)
 
-            ORDER_STATUS_TRANSITIONS.labels(
+            ORDER_METRICS.labels(
                 from_status=order.status,
                 to_status="production"
             ).inc()

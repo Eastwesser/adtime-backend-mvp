@@ -32,6 +32,8 @@ from app.services.order import OrderService
 from app.services.payment import PaymentService
 from app.services.subscription import SubscriptionService
 from app.services.admin import AdminService
+from app.services.storage import StorageService
+from app.services.production import ProductionService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
@@ -252,3 +254,15 @@ class UserService:
 async def get_user_service(session: AsyncSession = Depends(get_db)) -> UserService:
     user_repo = UserRepository(session)
     return UserService(user_repo)
+
+async def get_storage_service() -> StorageService:
+    return StorageService()
+
+StorageDep = Annotated[StorageService, Depends(get_storage_service)]
+
+async def get_production_service(
+    session: AsyncSession = Depends(get_db)
+) -> ProductionService:
+    return ProductionService(session)
+
+ProductionServiceDep = Annotated[ProductionService, Depends(get_production_service)]

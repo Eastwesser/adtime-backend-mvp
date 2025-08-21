@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import String, DateTime, UUID as SQLUUID, ForeignKey, CheckConstraint
+from sqlalchemy import Boolean, String, DateTime, UUID as SQLUUID, ForeignKey, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -46,7 +46,7 @@ class Generation(Base):
     result_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     external_task_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-
+    is_liked: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
     user: Mapped["User"] = relationship(back_populates="generation_tasks")
     orders: Mapped[List["Order"]] = relationship(
         "Order",

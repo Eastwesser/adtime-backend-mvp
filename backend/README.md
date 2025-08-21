@@ -1,10 +1,183 @@
 # AdTime Backend API
 
+🚀 API Documentation для фронтенд-разработчиков
+
+🔐 Аутентификация (Auth)
+
+    POST /api/v1/auth/login - Вход в систему
+
+    POST /api/v1/auth/register - Регистрация нового пользователя
+
+💰 Баланс (Balance)
+
+    GET /api/v1/balance - Получить текущий баланс пользователя
+
+    POST /api/v1/balance/deposit - Пополнить баланс
+
+🎨 Генерация изображений (Generate)
+
+    POST /api/v1/generate - Создать новую генерацию изображения
+
+    POST /api/v1/generate/{generation_id}/cancel - Отменить генерацию
+
+    GET /api/v1/generate/{generation_id}/status - Проверить статус генерации
+
+⚙️ Конфигурация генерации (Generation Config)
+
+    GET /api/v1/generation_config/generation - Получить доступные стили, размеры и лимиты
+
+📊 История (History)
+
+    GET /api/v1/history/generations - Получить историю генераций пользователя
+
+👍 Оценки (Feedback)
+
+    POST /api/v1/feedback/generation/{generation_id} - Оценить результат генерации (лайк/дизлайк)
+
+🛒 Маркетплейс (Marketplace)
+
+    GET /api/v1/marketplace/items - Просмотр товаров в маркетплейсе
+
+    POST /api/v1/marketplace/items/{item_id}/cart - Добавить товар в корзину
+
+    POST /api/v1/marketplace/items/{item_id}/order - Создать заказ напрямую
+
+    POST /api/v1/marketplace/cart/items - Работа с корзиной
+
+    POST /api/v1/marketplace/orders/direct - Создать прямой заказ
+
+📦 Заказы (Orders)
+
+    POST /api/v1/orders - Создать новый заказ
+
+    GET /api/v1/orders - Получить список заказов пользователя
+
+    GET /api/v1/orders/{order_id} - Получить детали заказа
+
+    PATCH /api/v1/orders/{order_id} - Обновить заказ
+
+    DELETE /api/v1/orders/{order_id} - Удалить заказ
+
+    POST /api/v1/orders/{order_id}/cancel - Отменить заказ
+
+    POST /api/v1/orders/{order_id}/messages - Отправить сообщение по заказу
+
+    GET /api/v1/orders/{order_id}/messages - Получить сообщения по заказу
+
+🏭 Производство (Production)
+
+    POST /api/v1/production/orders/{order_id}/assign - Назначить заказ на фабрику
+
+    PATCH /api/v1/production/orders/{order_id}/status - Обновить статус производства
+
+💳 Платежи (Payment)
+
+    POST /api/v1/payment/create - Создать платеж
+
+    POST /api/v1/payment/webhook - Webhook для обработки платежей
+
+    GET /api/v1/payment/{payment_id}/redirect - Перенаправление на оплату
+
+    GET /api/v1/payment/{payment_id}/status - Проверить статус платежа
+
+📤 Загрузка файлов (Upload)
+
+    POST /api/v1/upload/image - Загрузить изображение для генерации
+
+👤 Пользователи (Users)
+
+    GET /api/v1/users/me - Получить данные текущего пользователя
+
+    PATCH /api/v1/users/me - Обновить данные пользователя
+
+    GET /api/v1/users/{user_id} - Получить данные пользователя по ID
+
+👨‍💼 Админка (Admin)
+
+    GET /api/v1/admin/generations/stats - Статистика генераций (только для админов)
+
+    POST /api/v1/admin/users/{user_id}/grant-admin - Дать права администратора
+
+🩺 Системные (System)
+
+    GET /health - Проверка здоровья сервера
+
+    GET /metrics - Метрики Prometheus
+
+    GET /metrics/health - Health check для метрик
+
+📚 Документация
+
+    GET /docs - Swagger UI документация
+
+    GET /documentation - ReDoc документация
+
+    GET /openapi.json - OpenAPI спецификация
+
+🎯 Приоритетные эндпоинты для разработки:
+
+    Срочно: /balance, /generate, /upload/image - основные функции
+
+    Важно: /auth/*, /users/me - авторизация и профиль
+
+    Далее: /marketplace/*, /orders/* - маркетплейс и заказы
+
+    Дополнительно: Остальные эндпоинты
+
+
 For Fronetnders:
 To check all existing routes type these:
 ```bash
 cd backend
 python list_routes.py
+
+# This will show you such list of routes (available since 21.08.2025)
+2025-08-21 15:17:49,631 - app.core.logger.logger - INFO - Redis client initialized
+🌐 Все доступные роуты API:
+==================================================
+GET                  /
+GET                  /api/v1/admin/generations/stats
+POST                 /api/v1/admin/users/{user_id}/grant-admin
+POST                 /api/v1/auth/login
+POST                 /api/v1/auth/register
+GET                  /api/v1/balance
+POST                 /api/v1/balance/deposit
+POST                 /api/v1/feedback/generation/{generation_id}
+POST                 /api/v1/generate
+POST                 /api/v1/generate/{generation_id}/cancel
+GET                  /api/v1/generate/{generation_id}/status
+GET                  /api/v1/generation_config/generation
+GET                  /api/v1/history/generations
+POST                 /api/v1/marketplace/cart/items
+GET                  /api/v1/marketplace/items
+POST                 /api/v1/marketplace/items/{item_id}/cart
+POST                 /api/v1/marketplace/items/{item_id}/order
+POST                 /api/v1/marketplace/orders/direct
+POST                 /api/v1/orders
+GET                  /api/v1/orders
+GET                  /api/v1/orders/{order_id}
+PATCH                /api/v1/orders/{order_id}
+DELETE               /api/v1/orders/{order_id}
+POST                 /api/v1/orders/{order_id}/cancel
+POST                 /api/v1/orders/{order_id}/messages
+GET                  /api/v1/orders/{order_id}/messages
+POST                 /api/v1/payment/create
+POST                 /api/v1/payment/webhook
+GET                  /api/v1/payment/{payment_id}/redirect
+GET                  /api/v1/payment/{payment_id}/status
+POST                 /api/v1/production/orders/{order_id}/assign
+PATCH                /api/v1/production/orders/{order_id}/status
+POST                 /api/v1/upload/image
+GET                  /api/v1/users/me
+PATCH                /api/v1/users/me
+GET                  /api/v1/users/{user_id}
+GET | HEAD           /docs
+GET | HEAD           /docs/oauth2-redirect
+GET | HEAD           /documentation
+GET                  /health
+GET                  /metrics
+GET                  /metrics/health
+GET | HEAD           /openapi.json
 
 # for HTML
 python api_documentation.py

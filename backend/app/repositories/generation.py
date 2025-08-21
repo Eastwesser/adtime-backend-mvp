@@ -100,11 +100,30 @@ class GenerationRepository(BaseRepository[Generation]):
             return False
         return True
 
-    async def get_user_generations(
-            self,
-            user_id: uuid.UUID,
-            limit: int = 100
-    ) -> List[GenerationResponse]:
-        """Получает список генераций пользователя."""
-        generations = await self.generation_repo.get_by_user(user_id, limit=limit)
-        return [GenerationResponse.model_validate(g) for g in generations]
+    # async def get_user_generations(
+    #         self,
+    #         user_id: uuid.UUID,
+    #         limit: int = 100
+    # ) -> List[GenerationResponse]:
+    #     """Получает список генераций пользователя."""
+    #     generations = await self.generation_repo.get_by_user(user_id, limit=limit)
+    #     return [GenerationResponse.model_validate(g) for g in generations]
+
+    async def get_by_user(
+        self,
+        user_id: UUID,
+        skip: int = 0,
+        limit: int = 100,
+        order_by_desc: bool = True
+    ) -> List[Generation]:
+        """Получает список генераций пользователя с пагинацией."""
+        query = select(Generation).where(Generation.user_id == user_id)
+        
+        if order_by_desc:
+            query = query.order_by(Generation.created_at.desc())
+        
+        query = query.offset(skip).limit(limit)
+        
+        result = await self.session.execute(query)
+        return result.scalars().all()
+    

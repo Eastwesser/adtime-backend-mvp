@@ -1,165 +1,202 @@
 <!DOCTYPE html>
 <html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
+
+<head>
+    <meta charset="UTF-8">
     <title>API Documentation</title>
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 40px;
-      }
-      .endpoint {
-        border: 1px solid #ddd;
-        padding: 15px;
-        margin: 10px 0;
-      }
-      h3 {
-        color: #333;
-      }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+
+        .endpoint {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        h3 {
+            color: #333;
+        }
     </style>
-  </head>
-  <body>
+</head>
+
+<body>
     <h1>🚀 API Documentation</h1>
     <h2>📋 Все доступные эндпоинты</h2>
-    <div class="endpoint">
-      <h3>GET /</h3>
-      <p>Название: root</p>
+    <div class='endpoint'>
+        <h3>GET /</h3>
+        <p>Название: root</p>
     </div>
-    <div class="endpoint">
-      <h3>GET /api/v1/admin/generations/stats</h3>
-      <p>Название: generation_stats</p>
+    <div class='endpoint'>
+        <h3>GET /api/v1/admin/generations/stats</h3>
+        <p>Название: generation_stats</p>
     </div>
-    <div class="endpoint">
-      <h3>POST /api/v1/admin/users/{user_id}/grant-admin</h3>
-      <p>Название: grant_admin_privileges</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/admin/users/{user_id}/grant-admin</h3>
+        <p>Название: grant_admin_privileges</p>
     </div>
-    <div class="endpoint">
-      <h3>POST /api/v1/auth/login</h3>
-      <p>Название: login</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/auth/login</h3>
+        <p>Название: login</p>
     </div>
-    <div class="endpoint">
-      <h3>POST /api/v1/auth/register</h3>
-      <p>Название: register</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/auth/register</h3>
+        <p>Название: register</p>
     </div>
-    <div class="endpoint">
-      <h3>POST /api/v1/generate</h3>
-      <p>Название: create_generation</p>
+    <div class='endpoint'>
+        <h3>GET /api/v1/balance</h3>
+        <p>Название: get_balance</p>
     </div>
-    <div class="endpoint">
-      <h3>POST /api/v1/generate/{generation_id}/cancel</h3>
-      <p>Название: cancel_generation</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/balance/deposit</h3>
+        <p>Название: deposit_balance</p>
     </div>
-    <div class="endpoint">
-      <h3>GET /api/v1/generate/{generation_id}/status</h3>
-      <p>Название: check_generation_status</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/feedback/generation/{generation_id}</h3>
+        <p>Название: submit_generation_feedback</p>
     </div>
-    <div class="endpoint">
-      <h3>POST /api/v1/marketplace/cart/items</h3>
-      <p>Название: create_direct_order_endpoint</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/generate</h3>
+        <p>Название: create_generation</p>
     </div>
-    <div class="endpoint">
-      <h3>GET /api/v1/marketplace/items</h3>
-      <p>Название: list_market_items</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/generate/{generation_id}/cancel</h3>
+        <p>Название: cancel_generation</p>
     </div>
-    <div class="endpoint">
-      <h3>POST /api/v1/marketplace/items/{item_id}/cart</h3>
-      <p>Название: add_to_cart</p>
+    <div class='endpoint'>
+        <h3>GET /api/v1/generate/{generation_id}/status</h3>
+        <p>Название: check_generation_status</p>
     </div>
-    <div class="endpoint">
-      <h3>POST /api/v1/marketplace/items/{item_id}/order</h3>
-      <p>Название: create_direct_order</p>
+    <div class='endpoint'>
+        <h3>GET /api/v1/generation_config/generation</h3>
+        <p>Название: get_generation_config</p>
     </div>
-    <div class="endpoint">
-      <h3>POST /api/v1/marketplace/orders/direct</h3>
-      <p>Название: create_direct_order_endpoint</p>
+    <div class='endpoint'>
+        <h3>GET /api/v1/history/generations</h3>
+        <p>Название: get_generation_history</p>
     </div>
-    <div class="endpoint">
-      <h3>POST /api/v1/orders</h3>
-      <p>Название: create_order</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/marketplace/cart/items</h3>
+        <p>Название: create_direct_order_endpoint</p>
     </div>
-    <div class="endpoint">
-      <h3>GET /api/v1/orders</h3>
-      <p>Название: list_orders</p>
+    <div class='endpoint'>
+        <h3>GET /api/v1/marketplace/items</h3>
+        <p>Название: list_market_items</p>
     </div>
-    <div class="endpoint">
-      <h3>GET /api/v1/orders/{order_id}</h3>
-      <p>Название: get_order</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/marketplace/items/{item_id}/cart</h3>
+        <p>Название: add_to_cart</p>
     </div>
-    <div class="endpoint">
-      <h3>PATCH /api/v1/orders/{order_id}</h3>
-      <p>Название: update_order</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/marketplace/items/{item_id}/order</h3>
+        <p>Название: create_direct_order</p>
     </div>
-    <div class="endpoint">
-      <h3>DELETE /api/v1/orders/{order_id}</h3>
-      <p>Название: delete_order</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/marketplace/orders/direct</h3>
+        <p>Название: create_direct_order_endpoint</p>
     </div>
-    <div class="endpoint">
-      <h3>POST /api/v1/orders/{order_id}/cancel</h3>
-      <p>Название: cancel_order</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/orders</h3>
+        <p>Название: create_order</p>
     </div>
-    <div class="endpoint">
-      <h3>POST /api/v1/orders/{order_id}/messages</h3>
-      <p>Название: add_order_message</p>
+    <div class='endpoint'>
+        <h3>GET /api/v1/orders</h3>
+        <p>Название: list_orders</p>
     </div>
-    <div class="endpoint">
-      <h3>GET /api/v1/orders/{order_id}/messages</h3>
-      <p>Название: get_order_messages</p>
+    <div class='endpoint'>
+        <h3>GET /api/v1/orders/{order_id}</h3>
+        <p>Название: get_order</p>
     </div>
-    <div class="endpoint">
-      <h3>POST /api/v1/payment/create</h3>
-      <p>Название: create_payment</p>
+    <div class='endpoint'>
+        <h3>PATCH /api/v1/orders/{order_id}</h3>
+        <p>Название: update_order</p>
     </div>
-    <div class="endpoint">
-      <h3>POST /api/v1/payment/webhook</h3>
-      <p>Название: handle_webhook</p>
+    <div class='endpoint'>
+        <h3>DELETE /api/v1/orders/{order_id}</h3>
+        <p>Название: delete_order</p>
     </div>
-    <div class="endpoint">
-      <h3>GET /api/v1/payment/{payment_id}/redirect</h3>
-      <p>Название: redirect_to_payment</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/orders/{order_id}/cancel</h3>
+        <p>Название: cancel_order</p>
     </div>
-    <div class="endpoint">
-      <h3>GET /api/v1/payment/{payment_id}/status</h3>
-      <p>Название: check_payment_status</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/orders/{order_id}/messages</h3>
+        <p>Название: add_order_message</p>
     </div>
-    <div class="endpoint">
-      <h3>GET /api/v1/users/me</h3>
-      <p>Название: get_current_user</p>
+    <div class='endpoint'>
+        <h3>GET /api/v1/orders/{order_id}/messages</h3>
+        <p>Название: get_order_messages</p>
     </div>
-    <div class="endpoint">
-      <h3>PATCH /api/v1/users/me</h3>
-      <p>Название: update_user</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/payment/create</h3>
+        <p>Название: create_payment</p>
     </div>
-    <div class="endpoint">
-      <h3>GET /api/v1/users/{user_id}</h3>
-      <p>Название: get_user</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/payment/webhook</h3>
+        <p>Название: handle_webhook</p>
     </div>
-    <div class="endpoint">
-      <h3>HEAD, GET /docs</h3>
-      <p>Название: swagger_ui_html</p>
+    <div class='endpoint'>
+        <h3>GET /api/v1/payment/{payment_id}/redirect</h3>
+        <p>Название: redirect_to_payment</p>
     </div>
-    <div class="endpoint">
-      <h3>HEAD, GET /docs/oauth2-redirect</h3>
-      <p>Название: swagger_ui_redirect</p>
+    <div class='endpoint'>
+        <h3>GET /api/v1/payment/{payment_id}/status</h3>
+        <p>Название: check_payment_status</p>
     </div>
-    <div class="endpoint">
-      <h3>HEAD, GET /documentation</h3>
-      <p>Название: redoc_html</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/production/orders/{order_id}/assign</h3>
+        <p>Название: assign_order</p>
     </div>
-    <div class="endpoint">
-      <h3>GET /health</h3>
-      <p>Название: system_health_check</p>
+    <div class='endpoint'>
+        <h3>PATCH /api/v1/production/orders/{order_id}/status</h3>
+        <p>Название: update_order_status</p>
     </div>
-    <div class="endpoint">
-      <h3>GET /metrics</h3>
-      <p>Название: metrics</p>
+    <div class='endpoint'>
+        <h3>POST /api/v1/upload/image</h3>
+        <p>Название: upload_image</p>
     </div>
-    <div class="endpoint">
-      <h3>GET /metrics/health</h3>
-      <p>Название: metrics_health_check</p>
+    <div class='endpoint'>
+        <h3>GET /api/v1/users/me</h3>
+        <p>Название: get_current_user</p>
     </div>
-    <div class="endpoint">
-      <h3>HEAD, GET /openapi.json</h3>
-      <p>Название: openapi</p>
+    <div class='endpoint'>
+        <h3>PATCH /api/v1/users/me</h3>
+        <p>Название: update_user</p>
     </div>
-  </body>
+    <div class='endpoint'>
+        <h3>GET /api/v1/users/{user_id}</h3>
+        <p>Название: get_user</p>
+    </div>
+    <div class='endpoint'>
+        <h3>GET, HEAD /docs</h3>
+        <p>Название: swagger_ui_html</p>
+    </div>
+    <div class='endpoint'>
+        <h3>GET, HEAD /docs/oauth2-redirect</h3>
+        <p>Название: swagger_ui_redirect</p>
+    </div>
+    <div class='endpoint'>
+        <h3>GET, HEAD /documentation</h3>
+        <p>Название: redoc_html</p>
+    </div>
+    <div class='endpoint'>
+        <h3>GET /health</h3>
+        <p>Название: system_health_check</p>
+    </div>
+    <div class='endpoint'>
+        <h3>GET /metrics</h3>
+        <p>Название: metrics</p>
+    </div>
+    <div class='endpoint'>
+        <h3>GET /metrics/health</h3>
+        <p>Название: metrics_health_check</p>
+    </div>
+    <div class='endpoint'>
+        <h3>GET, HEAD /openapi.json</h3>
+        <p>Название: openapi</p>
+    </div>
+</body>
+
 </html>
