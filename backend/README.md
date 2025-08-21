@@ -1,5 +1,15 @@
 # AdTime Backend API
 
+For Fronetnders:
+To check all existing routes type these:
+```bash
+cd backend
+python list_routes.py
+
+# for HTML
+python api_documentation.py
+```
+
 Build:
 ```bash
 docker-compose up --build  # Builds images and starts all services
