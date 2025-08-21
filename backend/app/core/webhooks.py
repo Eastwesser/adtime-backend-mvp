@@ -1,4 +1,4 @@
-from typing import Callable, Awaitable
+from typing import Callable, Awaitable, Optional
 from fastapi import BackgroundTasks
 
 class WebhookManager:
@@ -11,10 +11,14 @@ class WebhookManager:
             return handler
         return decorator
 
-    async def trigger(self, event_type: str, payload: dict, background_tasks: BackgroundTasks):
+    async def trigger(self, event_type: str, payload: dict, background_tasks: BackgroundTasks, signature: Optional[str] = None):
         for handler_type, handler in self._handlers:
             if handler_type == event_type:
-                background_tasks.add_task(handler, payload)
+                # Pass signature to handler if it accepts it
+                if 'signature' in handler.__code__.co_varnames:
+                    background_tasks.add_task(handler, payload, signature)
+                else:
+                    background_tasks.add_task(handler, payload)
 
 # Global instance
 webhook_manager = WebhookManager()

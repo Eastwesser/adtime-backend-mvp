@@ -1,34 +1,21 @@
 from contextlib import asynccontextmanager
-
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
-
-from app.api.v1 import router as api_router
-from app.core.config import settings, YooKassaConfig
-from app.core.database import init_db
-from app.core.errors import APIError, api_error_handler
-from app.core.monitoring import setup_monitoring
-from app.core.webhooks import webhook_manager
-from app.core import redis
-
-YooKassaConfig.setup(settings)
+from sqlalchemy import text
 
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
-from sqlalchemy import text
-import redis.asyncio as redis
 
-from app.core.errors import APIError, api_error_handler
 from app.api.v1 import router as api_router
 from app.core.config import settings, YooKassaConfig
 from app.core.database import init_db, async_session
+from app.core.errors import APIError, api_error_handler
 from app.core.monitoring import setup_monitoring
 from app.core.webhooks import webhook_manager
-from app.core import responses
+from app.services.order import handle_order_webhook
+from app.core.redis import redis_client 
+
+YooKassaConfig.setup(settings)
 
 # Health check functions
 async def check_database_health():
@@ -39,20 +26,32 @@ async def check_database_health():
     except Exception:
         return "disconnected"
 
+# async def check_redis_health():
+#     try:
+#         redis_client = redis.Redis.from_url(settings.REDIS_URL)
+#         await redis_client.ping()
+#         await redis_client.close()
+#         return "connected"
+#     except Exception:
+#         return "disconnected"
+
 async def check_redis_health():
     try:
-        redis_client = redis.Redis.from_url(settings.REDIS_URL)
-        await redis_client.ping()
-        await redis_client.close()
-        return "connected"
+        return "connected" if await redis_client.ping() else "disconnected"
     except Exception:
         return "disconnected"
 
+# Add to lifespan
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """App lifespan management"""
     await init_db()
+    
+    # Import and register the webhook handler
+
+    webhook_manager.register("order.created")(handle_order_webhook)
+    
     yield
+    
 
 app = FastAPI(
     title="AdTime API",
@@ -105,6 +104,7 @@ app = FastAPI(
     swagger_ui_parameters={"defaultModelsExpandDepth": -1},
 )
 
+# Exception handlers
 app.add_exception_handler(APIError, api_error_handler)
 app.add_exception_handler(HTTPException, lambda _, exc: JSONResponse(
     status_code=exc.status_code,
@@ -143,17 +143,6 @@ app.include_router(api_router, prefix="/api/v1")
 async def root():
     return {"status": "ok", "version": settings.API_VERSION}
 
-
-# @app.get("/health", tags=["System"])
-# async def health_check():
-#     """System health endpoint"""
-#     return {
-#         "status": "healthy",
-#         "version": settings.API_VERSION,
-#         "database": "connected",
-#         "redis": "connected"
-#     }
-
 @app.get("/health", tags=["System"])
 async def system_health_check():
     """Overall system health endpoint with real checks"""
@@ -168,13 +157,3 @@ async def system_health_check():
         "database": db_status,
         "redis": redis_status
     }
-
-
-
-# Add to lifespan
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await init_db()
-    webhook_manager.register("order.created")(handle_order_webhook)
-    yield
-    

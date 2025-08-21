@@ -491,7 +491,6 @@ class OrderService:
             logger.warning(f"Invalid status transition: {str(e)}")
             raise HTTPException(400, str(e))
 
-
 # class ChatMessageCreate(BaseModel):
 #     """Схема для создания нового сообщения в чате заказа."""
 #     message: str = Field(
@@ -515,3 +514,89 @@ class OrderService:
 #             }
 #         }
 #     )
+
+async def handle_order_webhook(order_data: dict, signature: Optional[str] = None):
+    """Handle order.created webhook events with validation and retry logic"""
+    from app.core.database import async_session
+    from app.repositories.order import OrderRepository
+    from app.core.logger.logger import logger
+    from app.core.webhook_validation import webhook_validator
+    from app.core.retry import retry_manager
+    
+    try:
+        # Validate webhook signature (if provided)
+        if signature and settings.WEBHOOK_SECRET:
+            if not webhook_validator.validate_signature(
+                str(order_data).encode(), signature, settings.WEBHOOK_SECRET
+            ):
+                logger.error("Webhook signature validation failed")
+                return
+        
+        # Validate webhook payload structure
+        validation_errors = webhook_validator.validate_order_webhook(order_data)
+        if validation_errors:
+            logger.error(
+                "Webhook payload validation failed",
+                extra={"errors": validation_errors, "webhook_data": order_data}
+            )
+            return
+            
+        order_id = order_data['order_id']
+        new_status = order_data['status']
+        
+        logger.info(
+            f"Processing order webhook: order={order_id}, status={new_status}",
+            extra={"event_type": order_data.get('event_type'), "timestamp": order_data.get('timestamp')}
+        )
+        
+        # Use retry logic for database operations
+        async with async_session() as session:
+            order_repo = OrderRepository(session)
+            
+            # Retry the database operation
+            order = await retry_manager.execute_with_retry(
+                order_repo.get, order_id
+            )
+            
+            if order:
+                # Update order status with retry
+                await retry_manager.execute_with_retry(
+                    order_repo.update_status, order_id, new_status, session
+                )
+                
+                # Send notification with retry
+                try:
+                    from app.services.notifications import NotificationService
+                    notification_service = NotificationService(session)
+                    
+                    await retry_manager.execute_with_retry(
+                        notification_service.send,
+                        user_id=order.user_id,
+                        title="Order Status Updated",
+                        message=f"Your order #{order_id} status changed to {new_status}",
+                        notification_type="order_update",
+                        payload={"order_id": str(order_id), "new_status": new_status}
+                    )
+                    
+                    logger.info(f"Notification sent for order {order_id}")
+                except ImportError:
+                    logger.warning("NotificationService not available - skipping notifications")
+                except Exception as e:
+                    logger.error(f"Failed to send notification: {e}", exc_info=True)
+                
+                logger.info(
+                    f"Order {order_id} status updated to {new_status}",
+                    extra={"user_id": order.user_id, "order_id": order_id}
+                )
+            else:
+                logger.warning(
+                    f"Order {order_id} not found in database",
+                    extra={"webhook_data": order_data}
+                )
+                
+    except Exception as e:
+        logger.error(
+            f"Error processing order webhook: {e}", 
+            exc_info=True, 
+            extra={"webhook_data": order_data}
+        )

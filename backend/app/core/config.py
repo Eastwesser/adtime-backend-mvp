@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 from cryptography.hazmat.primitives import serialization
 from pydantic import Field, PostgresDsn, RedisDsn, HttpUrl
@@ -66,6 +67,33 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=True
     )
+
+    # Webhook settings
+    WEBHOOK_SECRET: str = Field(
+        default=os.urandom(32).hex(),  # Generate random secret if not provided
+        description="Secret key for webhook signature validation"
+    )
+    
+    WEBHOOK_RETRY_DELAY: float = Field(
+        default=1.0,
+        description="Initial retry delay in seconds"
+    )
+
+    WEBHOOK_MAX_RETRIES: int = Field(
+        default=5 if os.getenv('ENVIRONMENT') == 'production' else 3,
+        description="Maximum retry attempts for webhook processing"
+    )
+    
+    WEBHOOK_RETRY_BACKOFF: float = Field(
+        default=2.0,
+        description="Retry backoff multiplier"
+    )
+
+    @validator('WEBHOOK_SECRET')
+    def validate_webhook_secret(cls, v):
+        if len(v) < 16:  # Minimum length for security
+            raise ValueError('Webhook secret must be at least 16 characters')
+        return v
 
     @validator('S3_ENDPOINT')
     def validate_s3_endpoint(cls, v):
