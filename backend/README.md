@@ -233,6 +233,8 @@ Our project's current tree:
 .
 ├── backend
 │   ├── alembic.ini
+│   ├── API_DOCUMENTATION.html
+│   ├── api_documentation.py
 │   ├── app
 │   │   ├── api
 │   │   │   ├── __init__.py
@@ -241,13 +243,18 @@ Our project's current tree:
 │   │   │   └── v1
 │   │   │       ├── admin.py
 │   │   │       ├── auth.py
+│   │   │       ├── balance.py
+│   │   │       ├── feedback.py
 │   │   │       ├── generate.py
+│   │   │       ├── generation_config.py
+│   │   │       ├── history.py
 │   │   │       ├── __init__.py
 │   │   │       ├── marketplace.py
 │   │   │       ├── orders.py
 │   │   │       ├── payment.py
 │   │   │       ├── production.py
 │   │   │       ├── __pycache__
+│   │   │       ├── upload.py
 │   │   │       └── users.py
 │   │   ├── core
 │   │   │   ├── chat.py
@@ -351,6 +358,7 @@ Our project's current tree:
 │   │   ├── schemas
 │   │   │   ├── admin.py
 │   │   │   ├── auth.py
+│   │   │   ├── balance.py
 │   │   │   ├── errors.py
 │   │   │   ├── generation.py
 │   │   │   ├── __init__.py
@@ -361,6 +369,7 @@ Our project's current tree:
 │   │   │   ├── __pycache__
 │   │   │   │   ├── admin.cpython-312.pyc
 │   │   │   │   ├── auth.cpython-312.pyc
+│   │   │   │   ├── balance.cpython-312.pyc
 │   │   │   │   ├── errors.cpython-312.pyc
 │   │   │   │   ├── generation.cpython-312.pyc
 │   │   │   │   ├── __init__.cpython-312.pyc
@@ -396,14 +405,18 @@ Our project's current tree:
 │   │       │   ├── notifications.cpython-312.pyc
 │   │       │   ├── order.cpython-312.pyc
 │   │       │   ├── payment.cpython-312.pyc
+│   │       │   ├── production.cpython-312.pyc
+│   │       │   ├── storage.cpython-312.pyc
 │   │       │   ├── subscription.cpython-312.pyc
 │   │       │   ├── user.cpython-312.pyc
 │   │       │   └── yookassa_adapter.cpython-312.pyc
+│   │       ├── storage.py
 │   │       ├── subscription.py
 │   │       ├── user.py
 │   │       └── yookassa_adapter.py
 │   ├── Dockerfile
 │   ├── __init__.py
+│   ├── list_routes.py
 │   ├── migrate.py
 │   ├── migrations
 │   │   ├── env.py
@@ -412,10 +425,12 @@ Our project's current tree:
 │   │   ├── README
 │   │   ├── script.py.mako
 │   │   └── versions
+│   │       ├── 12e666579334_add_is_liked_to_generations.py
 │   │       ├── 222222222222_consolidated_user_timestamps.py
 │   │       ├── 333333333333_convert_to_kopecks.py
 │   │       ├── 466b80ceb431_initial_migration.py
 │   │       └── __pycache__
+│   │           ├── 12e666579334_add_is_liked_to_generations.cpython-312.pyc
 │   │           ├── 1d3e005ea667_add_created_at_to_users.cpython-312.pyc
 │   │           ├── 222222222222_consolidated_user_timestamps.cpython-312.pyc
 │   │           ├── 333333333333_convert_to_kopecks.cpython-312.pyc
@@ -443,6 +458,8 @@ Our project's current tree:
 │   │   ├── test_order.py
 │   │   ├── test_payments.py
 │   │   └── test_production.py
+│   ├── uploads
+│   │   └── images
 │   └── venv
 │       ├── bin
 │       │   ├── activate
@@ -500,7 +517,7 @@ Our project's current tree:
 ├── requirements-dev.txt
 └── requirements.txt
 
-38 directories, 231 files
+40 directories, 246 files
 ```
 
 ## Ключевые файлы:
