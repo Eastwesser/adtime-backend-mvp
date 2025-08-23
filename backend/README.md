@@ -678,7 +678,8 @@ sudo find . -name "__pycache__" -exec rm -rf {} +
 ## DB ACCESS:
 ```bash
 docker exec -it ddc9dd1533d8 psql -U postgres -d adtime
-
+# OR
+docker exec -it adtime_postgres psql -U postgres -d adtime
 
 # -- List all tables
 \dt
@@ -691,4 +692,26 @@ SELECT * FROM users;
 
 # -- Quit psql
 \q
+```
+## Clean the pycache directories
+```bash
+find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+```
+
+## SECURITY
+
+```bash
+# For testing only - use proper secrets in production
+echo "dev_postgres_password" > secrets/postgres_password.txt
+echo "dev_redis_password" > secrets/redis_password.txt
+echo "dev_jwt_secret_$(openssl rand -hex 32)" > secrets/jwt_secret.txt
+echo "test_kandinsky_key" > secrets/kandinsky_api_key.txt
+echo "test_kandinsky_secret" > secrets/kandinsky_secret_key.txt
+echo "test_yookassa_shop" > secrets/yookassa_shop_id.txt
+echo "test_yookassa_secret" > secrets/yookassa_secret_key.txt
+echo "test_s3_access" > secrets/s3_access_key.txt
+echo "test_s3_secret" > secrets/s3_secret_key.txt
+
+# Set permissions again
+chmod 600 secrets/*.txt
 ```

@@ -975,6 +975,20 @@ build-docs = ["cloud-sptheme (>=1.10.1)", "sphinx (>=1.6)", "sphinxcontrib-fullt
 totp = ["cryptography"]
 
 [[package]]
+name = "password-strength"
+version = "0.0.3.post2"
+description = "Password strength and validation"
+optional = false
+python-versions = "*"
+files = [
+    {file = "password_strength-0.0.3.post2-py2.py3-none-any.whl", hash = "sha256:6739357c2863d707b7c7f247ff7c6882a70904a18d12c9aaf98f8b95da176fb9"},
+    {file = "password_strength-0.0.3.post2.tar.gz", hash = "sha256:bf4df10a58fcd3abfa182367307b4fd7b1cec518121dd83bf80c1c42ba796762"},
+]
+
+[package.dependencies]
+six = "*"
+
+[[package]]
 name = "pathspec"
 version = "0.12.1"
 description = "Utility library for gitignore style pattern matching of file paths."
@@ -1876,4 +1890,4 @@ urllib3 = "*"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "eda7ab0b15c332e1047226357559f42fcf46934dc871a77e1a675c4a47fa6b20"
+content-hash = "040d8575271904d1908fd11e2cbe651b70420a68d6443213108b05c06604007f"

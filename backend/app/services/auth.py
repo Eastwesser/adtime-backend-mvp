@@ -54,7 +54,21 @@ class AuthService:
         Returns:
             str: Хешированный пароль
         """
-        return pwd_context.hash(password)
+        if not settings.PASSWORD_PEPPER:
+            raise ValueError("PASSWORD_PEPPER is not configured!")
+        # Добавляем pepper к паролю перед хешированием
+        peppered_password = password + settings.PASSWORD_PEPPER
+        return pwd_context.hash(peppered_password)
+
+    @staticmethod
+    def verify_password(plain_password: str, hashed_password: str) -> bool:
+        """Проверяет соответствие пароля и его хеша с pepper."""
+        if not settings.PASSWORD_PEPPER:
+            raise ValueError("PASSWORD_PEPPER is not configured!")
+        
+        # Добавляем тот же pepper для проверки
+        peppered_password = plain_password + settings.PASSWORD_PEPPER
+        return pwd_context.verify(peppered_password, hashed_password)
 
     @staticmethod
     def create_access_token(user: User) -> Token:

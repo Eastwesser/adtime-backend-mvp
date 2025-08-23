@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 from app.api.v1 import router as api_router
 from app.core.config import settings, YooKassaConfig
@@ -37,6 +38,7 @@ async def check_database_health():
 
 async def check_redis_health():
     try:
+        # Use the global redis_client instance
         return "connected" if await redis_client.ping() else "disconnected"
     except Exception:
         return "disconnected"
@@ -104,6 +106,10 @@ app = FastAPI(
     swagger_ui_parameters={"defaultModelsExpandDepth": -1},
 )
 
+# HTTPS редирект в production
+if not settings.DEBUG:
+    app.add_middleware(HTTPSRedirectMiddleware)
+
 # Exception handlers
 app.add_exception_handler(APIError, api_error_handler)
 app.add_exception_handler(HTTPException, lambda _, exc: JSONResponse(
@@ -115,10 +121,10 @@ app.add_exception_handler(HTTPException, lambda _, exc: JSONResponse(
 setup_monitoring(app)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.ALLOWED_ORIGINS,  # ← Используем настройки из config
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 def custom_openapi():

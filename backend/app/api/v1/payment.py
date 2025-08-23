@@ -1,11 +1,11 @@
 from typing import Optional
 from uuid import UUID
-
+from fastapi import Request
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from yookassa import Payment as YooPayment
-
+from app.core.webhook_validation import webhook_validator
 from app.core.dependencies import PaymentServiceDep
 from app.core.dependencies import (
     get_db
@@ -93,10 +93,16 @@ async def check_payment_status(
     include_in_schema=False
 )
 async def handle_webhook(
+        request: Request,
         service: PaymentServiceDep,
         notification: dict,
-        session: AsyncSession = Depends(get_db)
+        session: AsyncSession = Depends(get_db),
 ):
+    # Проверка IP адреса
+    client_ip = request.client.host
+    if not webhook_validator.validate_yookassa_ip(client_ip):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
     result = await service.handle_webhook(session, notification)
     if not result:
         raise HTTPException(

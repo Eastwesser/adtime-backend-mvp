@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-
+from app.core.redis import redis_client 
 from fastapi import HTTPException
 
 import redis
@@ -17,64 +17,109 @@ class RateLimiter:
          await limiter.check_request("user123")
     """
 
-    def __init__(self, redis_client: redis.Redis, rate_limit: str):
-        """
-        Args:
-            redis_client: Клиент Redis
-            rate_limit: Лимит в формате "10/minute" или "100/hour"
-        """
-        self.redis = redis_client
+    # def __init__(self, redis_client: redis.Redis, rate_limit: str):
+    #     """
+    #     Args:
+    #         redis_client: Клиент Redis
+    #         rate_limit: Лимит в формате "10/minute" или "100/hour"
+    #     """
+    #     self.redis = redis_client
+    #     self.limit, self.period = self._parse_rate_limit(rate_limit)
+
+
+    def __init__(self, rate_limit: str = "5/minute"):
         self.limit, self.period = self._parse_rate_limit(rate_limit)
+
+
+    # def _parse_rate_limit(self, rate_limit: str) -> tuple[int, int]:
+    #     try:
+    #         limit, period = rate_limit.split("/")
+    #         limit = int(limit)
+
+    #         if period == "second":
+    #             period_seconds = 1
+    #         elif period == "minute":
+    #             period_seconds = 60
+    #         elif period == "hour":
+    #             period_seconds = 3600
+    #         else:
+    #             raise ValueError("Invalid period")
+
+    #         return limit, period_seconds
+    #     except Exception as e:
+    #         raise ValueError(f"Invalid rate limit format: {rate_limit}") from e
 
     def _parse_rate_limit(self, rate_limit: str) -> tuple[int, int]:
         try:
             limit, period = rate_limit.split("/")
             limit = int(limit)
-
-            if period == "second":
-                period_seconds = 1
-            elif period == "minute":
-                period_seconds = 60
-            elif period == "hour":
-                period_seconds = 3600
-            else:
-                raise ValueError("Invalid period")
-
+            period_seconds = {
+                "second": 1,
+                "minute": 60,
+                "hour": 3600
+            }[period.lower()]
             return limit, period_seconds
         except Exception as e:
             raise ValueError(f"Invalid rate limit format: {rate_limit}") from e
 
+
+    # async def check_request(self, key: str) -> bool:
+    #     """
+    #     Проверяет, не превышен ли лимит запросов
+
+    #     Returns:
+    #         bool: True если запрос разрешен
+
+    #     Raises:
+    #         HTTPException: 429 если лимит превышен
+    #     """
+    #     now = datetime.now()
+    #     current_window = now.replace(
+    #         second=0,
+    #         microsecond=0
+    #     ).timestamp()
+
+    #     redis_key = f"rate_limit:{key}:{current_window}"
+
+    #     try:
+    #         current = self.redis.incr(redis_key)
+    #         if current == 1:
+    #             self.redis.expire(redis_key, self.period)
+
+    #         if current > self.limit:
+    #             logger.warning(f"Rate limit exceeded for {key}")
+    #             raise HTTPException(
+    #                 status_code=429,
+    #                 detail=f"Rate limit exceeded: {self.limit}/{self.period}sec"
+    #             )
+    #         return True
+    #     except Exception as e:
+    #         logger.error(f"Rate limiter error: {e}")
+    #         return True  # Fail open
+
     async def check_request(self, key: str) -> bool:
-        """
-        Проверяет, не превышен ли лимит запросов
-
-        Returns:
-            bool: True если запрос разрешен
-
-        Raises:
-            HTTPException: 429 если лимит превышен
-        """
-        now = datetime.now()
-        current_window = now.replace(
-            second=0,
-            microsecond=0
-        ).timestamp()
-
+        current_window = int(datetime.now().timestamp() // self.period)
         redis_key = f"rate_limit:{key}:{current_window}"
-
         try:
-            current = self.redis.incr(redis_key)
+            # Use redis_client.client directly (not redis_client.client.client)
+            current = await redis_client.client.incr(redis_key)
             if current == 1:
-                self.redis.expire(redis_key, self.period)
-
+                await redis_client.client.expire(redis_key, self.period)
+            
             if current > self.limit:
                 logger.warning(f"Rate limit exceeded for {key}")
                 raise HTTPException(
                     status_code=429,
-                    detail=f"Rate limit exceeded: {self.limit}/{self.period}sec"
+                    detail=f"Rate limit exceeded. Try again in {self.period} seconds."
                 )
             return True
         except Exception as e:
             logger.error(f"Rate limiter error: {e}")
             return True  # Fail open
+        
+# Dependency для инъекции
+async def get_login_limiter():
+    return RateLimiter("5/minute")  # 5 попыток в минуту
 
+async def get_register_limiter():
+    return RateLimiter("3/hour")    # 3 регистрации в час        

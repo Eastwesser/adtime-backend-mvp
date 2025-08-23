@@ -12,6 +12,9 @@ from app.schemas.auth import (
 )
 from app.schemas.user import UserCreate
 from app.services.auth import AuthService
+from app.core.password_validation import validate_password_strength
+from app.core.rate_limiter import get_login_limiter, get_register_limiter
+from app.core.rate_limiter import RateLimiter
 
 router = APIRouter(tags=["Authentication"])
 
@@ -37,11 +40,26 @@ router = APIRouter(tags=["Authentication"])
 )
 async def login(
         form_data: OAuth2PasswordRequestForm = Depends(),
-        auth_service: AuthService = Depends(get_auth_service)
+        auth_service: AuthService = Depends(get_auth_service),
+        limiter: RateLimiter = Depends(get_login_limiter),
 ):
     """Authenticate user and return JWT tokens with user data"""
+    # user = await auth_service.authenticate_user(
+    #     email=form_data.username,  # OAuth2 uses 'username' field for email
+    #     password=form_data.password
+    # )
+
+    # if not user:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_401_UNAUTHORIZED,
+    #         detail="Incorrect email or password",
+    #         headers={"WWW-Authenticate": "Bearer"},
+    #     )
+    # Rate limiting ПЕРВЫМ делом
+    await limiter.check_request(f"login:{form_data.username}")
+    
     user = await auth_service.authenticate_user(
-        email=form_data.username,  # OAuth2 uses 'username' field for email
+        email=form_data.username,
         password=form_data.password
     )
 
@@ -51,7 +69,7 @@ async def login(
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
+    
     access_token = create_access_token(
         str(user.id),
         expires_delta=timedelta(minutes=30),
@@ -59,6 +77,13 @@ async def login(
     )
 
     refresh_token = create_refresh_token(str(user.id))
+
+    # await limiter.check_request(f"login:{form_data.username}")
+    
+    # user = await auth_service.authenticate_user(
+    #     email=form_data.username,
+    #     password=form_data.password
+    # )
 
     return UserLoginResponse(
         user=user,
@@ -93,9 +118,16 @@ class EmailExistsError(HTTPException):
 )
 async def register(
         user_create: UserCreate,
-        auth_service: AuthService = Depends(get_auth_service)
+        auth_service: AuthService = Depends(get_auth_service),
+        limiter: RateLimiter = Depends(get_register_limiter)
 ):
     """Register new user and return tokens"""
+
+    # Rate limiting
+    await limiter.check_request(f"register:{user_create.email}")
+    # Проверка пароля
+    validate_password_strength(user_create.password)
+
     if await auth_service.email_exists(user_create.email):
         raise EmailExistsError(user_create.email) 
     

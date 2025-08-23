@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: adtime_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: adtime
+      POSTGRES_DB: adtime
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d adtime"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: adtime_redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: adtime_backend
+    ports:
+      - "8042:8042"
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://postgres:adtime@postgres:5432/adtime"
+      REDIS_URL: "redis://redis:6379/0"
+      DEBUG: "True"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  redis_data:

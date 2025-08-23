@@ -2,7 +2,8 @@ from uuid import UUID
 from typing import Dict, List
 import hmac
 import hashlib
-
+from secrets import compare_digest
+import ipaddress
 from fastapi import HTTPException, status
 
 from app.core.config import settings
@@ -18,13 +19,16 @@ class WebhookValidator:
             logger.warning("Missing signature or secret for webhook validation")
             return False
             
-        expected_signature = hmac.new(
-            secret.encode(), 
-            payload, 
-            hashlib.sha256
-        ).hexdigest()
-        
-        return hmac.compare_digest(expected_signature, signature)
+        # expected_signature = hmac.new(
+        #     secret.encode(), 
+        #     payload, 
+        #     hashlib.sha256
+        # ).hexdigest()
+        # return hmac.compare_digest(expected_signature, signature)
+
+        expected_signature = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
+        return compare_digest(expected_signature, signature) 
+    
 
     @staticmethod
     def validate_order_webhook(payload: Dict) -> List[str]:
@@ -57,6 +61,28 @@ class WebhookValidator:
                 errors.append("order_id must be a valid UUID")
                 
         return errors
-
+    
+    @staticmethod
+    def validate_yookassa_ip(ip: str) -> bool:
+        """Validate that webhook comes from YooKassa IP range"""
+        yookassa_ips = [
+            "185.71.76.0/27", 
+            "185.71.77.0/27", 
+            "77.75.153.0/25",
+            "77.75.156.0/25",
+            "2a02:5180::/32"
+        ]
+        
+        try:
+            ip_addr = ipaddress.ip_address(ip)
+            return any(ip_addr in ipaddress.ip_network(net) for net in yookassa_ips)
+        except ValueError:
+            return False
+        
 # Global instance
 webhook_validator = WebhookValidator()
+
+def validate_ip_address(ip: str) -> bool:
+    """Validate YooKassa webhook IP addresses"""
+    yookassa_ips = ["185.71.76.0/27", "185.71.77.0/27", "77.75.153.0/25"]
+    return any(ipaddress.ip_address(ip) in ipaddress.ip_network(net) for net in yookassa_ips)

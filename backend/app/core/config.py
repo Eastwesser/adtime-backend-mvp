@@ -12,10 +12,11 @@ class Settings(BaseSettings):
     DEBUG: bool = Field(default=False, env="DEBUG")
 
     # Database settings
-    DATABASE_URL: PostgresDsn = Field(
-        default="postgresql+asyncpg://user:pass@localhost:5432/db",
-        description="URL подключения к PostgreSQL"
-    )
+    DATABASE_URL: PostgresDsn = Field(description="URL подключения к PostgreSQL")
+    # DATABASE_URL: PostgresDsn = Field(
+    #     default="postgresql+asyncpg://user:pass@localhost:5432/db",
+    #     description="URL подключения к PostgreSQL"
+    # )
     DB_ECHO: bool = Field(
         default=False,
         description="Логировать SQL-запросы"
@@ -40,7 +41,8 @@ class Settings(BaseSettings):
     YOOKASSA_RETURN_URL: str = "https://yourapp.com/payment/return"
 
     # Redis
-    REDIS_URL: RedisDsn = "redis://redis:6379/0" 
+    REDIS_URL: RedisDsn = Field(description="Redis connection URL")
+    # REDIS_URL: RedisDsn = "redis://redis:6379/0" 
 
     # Auth
     JWT_PRIVATE_KEY: Optional[str] = None
@@ -56,7 +58,11 @@ class Settings(BaseSettings):
     KANDINSKY_SECRET_KEY: str
 
     # CORS and API
-    ALLOWED_ORIGINS: list[str] = ["*"]
+    ALLOWED_ORIGINS: list[str] = Field(
+        default=["http://localhost:3000", "https://yourapp.com"],
+        description="Allowed CORS origins"
+    )
+    # ALLOWED_ORIGINS: list[str] = ["*"]
     API_VERSION: str = "1.0.0"
     SUPPORT_EMAIL: str = "support@adtime.com"
 
@@ -88,6 +94,29 @@ class Settings(BaseSettings):
         default=2.0,
         description="Retry backoff multiplier"
     )
+
+    # PEPPER для паролей
+    PASSWORD_PEPPER: str = Field(
+        default="",
+        description="Secret pepper value for password hashing. Critical for security!"
+    )
+    
+    # Дополнительно можно добавить:
+    BCRYPT_ROUNDS: int = Field(
+        default=12,
+        description="Cost factor for bcrypt password hashing",
+        ge=10, le=16  # Минимум 10, максимум 16
+    )
+
+    @validator('ALLOWED_ORIGINS', pre=True)
+    def parse_allowed_origins(cls, v):
+        if isinstance(v, str):
+            import json
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return v.split(',')
+        return v
 
     @validator('WEBHOOK_SECRET')
     def validate_webhook_secret(cls, v):
