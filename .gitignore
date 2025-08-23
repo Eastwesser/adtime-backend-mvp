@@ -167,3 +167,63 @@ cython_debug/
 *.key
 *.cert
 *.pub
+
+# Security and secrets
+secrets/
+data/
+*.pem
+private.key
+*.cert
+.env
+.env.local
+.env.production
+.env.development
+.env.test
+.env.example
+docker-compose.override.yml
+security-check.sh
+setup-firewall.sh
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+venv*/
+env/
+env*/
+.venv/
+.venv*/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Uploads
+uploads/
