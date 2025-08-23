@@ -674,3 +674,21 @@ grep -r "Enum" app/ | wc -l
 ```bash
 sudo find . -name "__pycache__" -exec rm -rf {} +
 ```
+
+## DB ACCESS:
+```bash
+docker exec -it ddc9dd1533d8 psql -U postgres -d adtime
+
+
+# -- List all tables
+\dt
+
+# -- List all databases
+\l
+
+# -- View users table
+SELECT * FROM users;
+
+# -- Quit psql
+\q
+```
