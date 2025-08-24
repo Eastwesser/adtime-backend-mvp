@@ -7,6 +7,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.core.dependencies import get_auth_service
 from app.core.security import create_access_token, create_refresh_token
 from app.schemas.auth import (
+    CheckEmailRequest,
+    CheckEmailResponse,
+    QuickRegisterRequest,
+    QuickSessionRequest,
+    QuickSessionResponse,
     TokenResponse,
     UserLoginResponse
 )
@@ -44,18 +49,6 @@ async def login(
         limiter: RateLimiter = Depends(get_login_limiter),
 ):
     """Authenticate user and return JWT tokens with user data"""
-    # user = await auth_service.authenticate_user(
-    #     email=form_data.username,  # OAuth2 uses 'username' field for email
-    #     password=form_data.password
-    # )
-
-    # if not user:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_401_UNAUTHORIZED,
-    #         detail="Incorrect email or password",
-    #         headers={"WWW-Authenticate": "Bearer"},
-    #     )
-    # Rate limiting ПЕРВЫМ делом
     await limiter.check_request(f"login:{form_data.username}")
     
     user = await auth_service.authenticate_user(
@@ -78,18 +71,16 @@ async def login(
 
     refresh_token = create_refresh_token(str(user.id))
 
-    # await limiter.check_request(f"login:{form_data.username}")
-    
-    # user = await auth_service.authenticate_user(
-    #     email=form_data.username,
-    #     password=form_data.password
-    # )
-
     return UserLoginResponse(
         user=user,
-        access_token=TokenResponse(
+        token=TokenResponse(
             access_token=access_token,
-            token_type="bearer"
+            token_type="bearer",
+            token_id=str(uuid.uuid4()),  # ← ADDED
+            expires_in=1800,  # ← ADDED (30 minutes in seconds)
+            issued_at=datetime.now(timezone.utc).isoformat(),  # ← ADDED
+            scopes=["read", "write"],  # ← ADDED
+            refresh_token=refresh_token  # ← ADDED
         ),
         refresh_token=refresh_token
     )
@@ -151,7 +142,7 @@ async def register(
                 expires_in=1800,
                 issued_at=datetime.now(timezone.utc).isoformat(),
                 scopes=["read", "write"],
-                refresh_token=refresh_token  # Include refresh_token here
+                refresh_token=refresh_token,
             ),
             requires_2fa=False
         )
@@ -162,4 +153,52 @@ async def register(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
+
+
+@router.post("/check-email", response_model=CheckEmailResponse)
+async def check_email(
+    request: CheckEmailRequest,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    exists = await auth_service.email_exists(request.email)
+    return {"exists": exists}
+
+@router.post("/quick-session", response_model=QuickSessionResponse)
+async def create_quick_session(
+    request: QuickSessionRequest,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    return await auth_service.create_guest_session(request.device_id)
+
+@router.post("/quick-register", response_model=UserLoginResponse)
+async def quick_register(
+    request: QuickRegisterRequest,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    user = await auth_service.quick_register(
+        request.device_id, 
+        request.email, 
+        request.phone
+    )
     
+    # Создать токены как в обычном login
+    access_token = create_access_token(
+        str(user.id),
+        expires_delta=timedelta(minutes=30),
+        role=user.role
+    )
+    refresh_token = create_refresh_token(str(user.id))
+
+    return UserLoginResponse(
+        user=user,
+        token=TokenResponse(
+            access_token=access_token,
+            token_type="bearer",
+            token_id=str(uuid.uuid4()),
+            expires_in=1800,
+            issued_at=datetime.now(timezone.utc).isoformat(),
+            scopes=["read", "write"],
+            refresh_token=refresh_token
+        ),
+        requires_2fa=False
+    )

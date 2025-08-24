@@ -15,6 +15,10 @@ from .feedback import router as feedback_router
 from .history import router as history_router
 from .upload import router as upload_router
 from .production import router as production_router
+# Authentication (7 displays)
+from .oauth import router as oauth_router
+from .phone import router as phone_router
+
 
 router = APIRouter()
 
@@ -33,3 +37,6 @@ router.include_router(feedback_router, prefix="/feedback", tags=["Feedback"])
 router.include_router(history_router, prefix="/history", tags=["History"])
 router.include_router(production_router, prefix="/production", tags=["Production"])
 router.include_router(upload_router, prefix="/upload", tags=["Upload"])
+# Auth7
+router.include_router(oauth_router, prefix="/oauth", tags=["OAuth"])
+router.include_router(phone_router, prefix="/phone", tags=["Phone Auth"])

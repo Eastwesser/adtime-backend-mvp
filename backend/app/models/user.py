@@ -66,3 +66,7 @@ class User(Base):
         cascade="all, delete-orphan",
         order_by="Notification.created_at.desc()"
     )
+    is_guest: Mapped[bool] = mapped_column(default=False)
+    device_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    email_verified: Mapped[bool] = mapped_column(default=False)

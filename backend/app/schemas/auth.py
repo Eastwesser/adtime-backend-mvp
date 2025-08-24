@@ -177,3 +177,22 @@ class RefreshTokenRequest(BaseModel):
             }
         }
     )
+
+
+class CheckEmailRequest(BaseModel):
+    email: str = Field(..., description="Email для проверки")
+
+class CheckEmailResponse(BaseModel):
+    exists: bool = Field(..., description="Существует ли email")
+
+class QuickSessionRequest(BaseModel):
+    device_id: str = Field(..., description="ID устройства")
+
+class QuickSessionResponse(BaseModel):
+    access_token: str = Field(..., description="JWT токен")
+    is_guest: bool = Field(..., description="Гостевая ли сессия")
+
+class QuickRegisterRequest(BaseModel):
+    device_id: str = Field(..., description="ID устройства")
+    email: Optional[str] = Field(None, description="Email пользователя")
+    phone: Optional[str] = Field(None, description="Телефон пользователя")

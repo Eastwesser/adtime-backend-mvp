@@ -188,7 +188,37 @@ Build:
 docker-compose up --build  # Builds images and starts all services
 
 # FOR DEVELOPMENT
-docker-compose -f docker-compose.dev.yml up --build
+# Check disk usage
+df -h
+
+# Check Docker disk usage
+docker system df
+
+# See detailed space usage by containers
+docker system df -v
+
+# CLEANUP
+# Remove all exited containers
+docker rm $(docker ps -aq -f status=exited)
+
+# Remove dangling images
+docker rmi $(docker images -f "dangling=true" -q)
+
+# Remove unused volumes (be careful with this!)
+docker volume rm $(docker volume ls -q -f dangling=true)
+
+docker system prune -a --volumes --force # wipeout all containers (ONLY FOR LOW DISK SPACE)
+# Remove all stopped containers
+docker container prune --force
+
+# Remove all unused images
+docker image prune -a --force
+
+# Remove all unused volumes (CAREFUL: this will delete database data!)
+docker volume prune --force
+
+# Then run to test:
+docker-compose -f docker-compose.dev.yml up --build # Dev build for tests
 
 # Backend: http://localhost:8042
 # Prometheus: http://localhost:9090
@@ -224,6 +254,144 @@ docker-compose build --no-cache backend
 docker-compose up
 ```
 
+# WORKFLOW TESTS:
+
+### 1. Проверка email
+curl -X POST http://localhost:8000/api/v1/auth/check-email \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com"}'
+
+### 2. Гостевая сессия
+curl -X POST http://localhost:8000/api/v1/auth/quick-session \
+  -H "Content-Type: application/json" \
+  -d '{"device_id":"test_device_123"}'
+
+### 3. Быстрая регистрация (после гостевой сессии)
+curl -X POST http://localhost:8000/api/v1/auth/quick-register \
+  -H "Content-Type: application/json" \
+  -d '{"device_id":"test_device_123","email":"user@example.com"}'
+
+### 4. OAuth провайдеры
+curl http://localhost:8000/api/v1/oauth/providers
+
+
+# 🔐 AUTHENTICATION API ENDPOINTS
+
+Base URL: http://localhost:8042/api/v1
+1. Check Email Availability
+```bash
+curl -X POST http://localhost:8042/api/v1/auth/check-email \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com"}'
+```
+
+2. Quick Guest Session (1-click)
+```bash
+curl -X POST http://localhost:8042/api/v1/auth/quick-session \
+  -H "Content-Type: application/json" \
+  -d '{"device_id":"test_device_123"}'
+```
+
+3. Quick Register (2-clicks)
+```bash
+curl -X POST http://localhost:8042/api/v1/auth/quick-register \
+  -H "Content-Type: application/json" \
+  -d '{"device_id":"test_device_123", "email":"user@example.com", "phone":"+79161234567"}'
+```
+
+4. Standard Login
+```bash
+curl -X POST http://localhost:8042/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"user@example.com", "password":"password123"}'
+```
+
+5. Standard Registration
+```bash
+curl -X POST http://localhost:8042/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com", "password":"password123"}'
+```
+
+6. OAuth Providers List
+```bash
+curl http://localhost:8042/api/v1/oauth/providers
+```
+
+7. Phone Auth - Send SMS (Stub)
+```bash
+curl -X POST http://localhost:8042/api/v1/phone/init \
+  -H "Content-Type: application/json" \
+  -d '{"phone":"+79161234567"}'
+```
+
+8. Phone Auth - Verify Code (Stub)
+```bash
+curl -X POST http://localhost:8042/api/v1/phone/verify \
+  -H "Content-Type: application/json" \
+  -d '{"phone":"+79161234567", "code":"123456"}'
+```
+
+## 🎯 QUICK START (User Journey)
+Scenario 1: Quick Registration (2 clicks)
+```bash
+# 1. Create guest session
+curl -X POST http://localhost:8042/api/v1/auth/quick-session \
+  -H "Content-Type: application/json" \
+  -d '{"device_id":"user_device_123"}'
+
+# 2. Convert to permanent user  
+curl -X POST http://localhost:8042/api/v1/auth/quick-register \
+  -H "Content-Type: application/json" \
+  -d '{"device_id":"user_device_123", "email":"user@example.com"}'
+```
+
+Scenario 2: Standard Flow
+```bash
+# 1. Check email
+curl -X POST http://localhost:8042/api/v1/auth/check-email \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com"}'
+
+# 2. Register
+curl -X POST http://localhost:8042/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com", "password":"password123"}'
+
+# 3. Login
+curl -X POST http://localhost:8042/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"user@example.com", "password":"password123"}'
+```
+
+## 📋 RESPONSE EXAMPLES
+Quick Session Response:
+```json
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "is_guest": true
+}
+```
+
+OAuth Providers Response:
+```json
+{
+  "providers": [
+    {"id": "google", "name": "Google", "enabled": false},
+    {"id": "yandex", "name": "Yandex", "enabled": false}
+  ]
+}
+```
+
+Phone Auth Response (Stub):
+```json
+{
+  "success": true,
+  "message": "SMS sent (stub)",
+  "phone": "+79161234567",
+  "test_code": "123456"
+}
+```
 
 ## Project Tree:
 To get it run : 

@@ -117,3 +117,21 @@ class UserRepository(BaseRepository[User]):
         
         return result.scalars().first()
         
+
+    async def get_by_device(self, device_id: str) -> Optional[User]:
+        result = await self.session.execute(
+            select(User).where(User.device_id == device_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def update_user_fields(self, user_id: uuid.UUID, updates: dict) -> User:
+        user = await self.get(user_id)
+        if not user:
+            raise ValueError("User not found")
+        
+        for key, value in updates.items():
+            setattr(user, key, value)
+        
+        await self.session.commit()
+        await self.session.refresh(user)
+        return user

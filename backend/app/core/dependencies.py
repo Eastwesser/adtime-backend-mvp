@@ -38,8 +38,8 @@ from app.services.admin import AdminService
 from app.services.storage import StorageService
 from app.services.production import ProductionService
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
-
+# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 async def get_db() -> AsyncSession:
     """Генератор сессий базы данных для Dependency Injection.

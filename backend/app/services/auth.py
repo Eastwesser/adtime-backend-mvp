@@ -1,4 +1,5 @@
 # Аутентификация, JWT
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import HTTPException, status
@@ -111,8 +112,13 @@ class AuthService:
             return None
         return UserResponse.model_validate(user)
 
-    async def register_user(self, user_create: UserCreate) -> UserResponse:
-        """Регистрирует нового пользователя.
+    async def register_user(
+            self, 
+            user_create: UserCreate, 
+            is_guest: bool = False, 
+            device_id: str = None,
+    ) -> UserResponse:
+        """Регистрирует нового пользователя с поддержкой гостевого режима.
 
         Args:
             user_create: Данные для регистрации
@@ -124,8 +130,8 @@ class AuthService:
             HTTPException: Если email уже занят
         """
         try:
-            # Check for existing email
-            if await self.user_repo.get_by_email(user_create.email):
+            # Check for existing email (только если не гость)
+            if not is_guest and await self.user_repo.get_by_email(user_create.email):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="Email already registered"
@@ -144,13 +150,17 @@ class AuthService:
                 "email": user_create.email,
                 "hashed_password": self.get_password_hash(user_create.password),
                 "role": user_create.role,
-                "created_at": datetime.now(timezone.utc)
+                "created_at": datetime.now(timezone.utc),
+                "is_guest": is_guest
             }
             
+            if device_id:
+                user_data["device_id"] = device_id
+                
             if user_create.telegram_id:
                 user_data["telegram_id"] = user_create.telegram_id
 
-            # Create user - don't start a new transaction here
+            # Create user
             user = await self.user_repo.create(user_data)
             await self.user_repo.session.flush()
             await self.user_repo.session.refresh(user)
@@ -273,3 +283,58 @@ class AuthService:
         """
         user = await self.user_repo.get_by_email(email)
         return user is not None
+
+    # Исправить метод create_guest_session
+    async def create_guest_session(self, device_id: str) -> dict:
+        """Создание гостевой сессии"""
+        existing_user = await self.user_repo.get_by_device(device_id)
+        if existing_user:
+            token = self.create_access_token(existing_user)
+            return {
+                "access_token": token.access_token,
+                "is_guest": existing_user.is_guest
+            }
+        
+        # Создаем нового гостя
+        guest_email = f"guest_{device_id}@temp.adtime"
+        
+        # Используем исправленный register_user
+        guest_user = await self.register_user(
+            UserCreate(
+                email=guest_email, 
+                password=str(uuid.uuid4()),
+                role="user"
+            ),
+            is_guest=True,
+            device_id=device_id
+        )
+        
+        token = self.create_access_token(guest_user)
+        return {
+            "access_token": token.access_token,
+            "is_guest": True
+        }
+
+    # Исправить метод quick_register
+    async def quick_register(self, device_id: str, email: str = None, phone: str = None) -> UserResponse:
+        """Быстрая регистрация гостя"""
+        user = await self.user_repo.get_by_device(device_id)
+        if not user or not user.is_guest:
+            raise HTTPException(status_code=400, detail="No guest session found")
+        
+        update_data = {"is_guest": False}
+        if email:
+            # Проверить, не занят ли email
+            if await self.user_repo.get_by_email(email):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Email already registered"
+                )
+            update_data["email"] = email
+            update_data["email_verified"] = False
+            
+        if phone:
+            update_data["phone"] = phone
+            
+        updated_user = await self.user_repo.update_user_fields(user.id, update_data)
+        return UserResponse.model_validate(updated_user)
