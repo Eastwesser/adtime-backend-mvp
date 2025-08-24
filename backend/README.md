@@ -2,143 +2,151 @@
 
 🚀 API Documentation для фронтенд-разработчиков
 
-🔐 Аутентификация (Auth)
+🔐 Authentication
 
-    POST /api/v1/auth/login - Вход в систему
+    POST /api/v1/auth/login - User Login (JWT tokens)
 
-    POST /api/v1/auth/register - Регистрация нового пользователя
+    POST /api/v1/auth/register - User Registration
 
-💰 Баланс (Balance)
+    POST /api/v1/auth/check-email - Check Email availability
 
-    GET /api/v1/balance - Получить текущий баланс пользователя
+    POST /api/v1/auth/quick-session - Create Quick Guest Session
 
-    POST /api/v1/balance/deposit - Пополнить баланс
+    POST /api/v1/auth/quick-register - Quick Register from guest
 
-🎨 Генерация изображений (Generate)
+👤 Users
 
-    POST /api/v1/generate - Создать новую генерацию изображения
+    GET /api/v1/users/me - Get Current User
 
-    POST /api/v1/generate/{generation_id}/cancel - Отменить генерацию
+    PATCH /api/v1/users/me - Update Current User
 
-    GET /api/v1/generate/{generation_id}/status - Проверить статус генерации
+    GET /api/v1/users/{user_id} - Get User by ID
 
-⚙️ Конфигурация генерации (Generation Config)
+🎨 Generations
 
-    GET /api/v1/generation_config/generation - Получить доступные стили, размеры и лимиты
+    POST /api/v1/generate - Create Image Generation Task
 
-📊 История (History)
+    GET /api/v1/generate/{generation_id}/status - Check Generation Status
 
-    GET /api/v1/history/generations - Получить историю генераций пользователя
+    POST /api/v1/generate/{generation_id}/cancel - Cancel Generation
 
-👍 Оценки (Feedback)
+🏪 Marketplace
 
-    POST /api/v1/feedback/generation/{generation_id} - Оценить результат генерации (лайк/дизлайк)
+    GET /api/v1/marketplace/items - Browse Marketplace Items
 
-🛒 Маркетплейс (Marketplace)
+    POST /api/v1/marketplace/items/{item_id}/cart - Add Item to Cart
 
-    GET /api/v1/marketplace/items - Просмотр товаров в маркетплейсе
+    POST /api/v1/marketplace/items/{item_id}/order - Create Direct Order
 
-    POST /api/v1/marketplace/items/{item_id}/cart - Добавить товар в корзину
+    POST /api/v1/marketplace/orders/direct - Create Direct Order
 
-    POST /api/v1/marketplace/items/{item_id}/order - Создать заказ напрямую
+    POST /api/v1/marketplace/cart/items - Add to Cart
 
-    POST /api/v1/marketplace/cart/items - Работа с корзиной
+📦 Orders
 
-    POST /api/v1/marketplace/orders/direct - Создать прямой заказ
+    POST /api/v1/orders - Create New Order
 
-📦 Заказы (Orders)
+    GET /api/v1/orders - Get User Orders
 
-    POST /api/v1/orders - Создать новый заказ
+    GET /api/v1/orders/{order_id} - Get Order Details
 
-    GET /api/v1/orders - Получить список заказов пользователя
+    PATCH /api/v1/orders/{order_id} - Update Order
 
-    GET /api/v1/orders/{order_id} - Получить детали заказа
+    DELETE /api/v1/orders/{order_id} - Delete Order
 
-    PATCH /api/v1/orders/{order_id} - Обновить заказ
+    POST /api/v1/orders/{order_id}/cancel - Cancel Order
 
-    DELETE /api/v1/orders/{order_id} - Удалить заказ
+    POST /api/v1/orders/{order_id}/messages - Add Message to Order Chat
 
-    POST /api/v1/orders/{order_id}/cancel - Отменить заказ
+    GET /api/v1/orders/{order_id}/messages - Get Order Messages
 
-    POST /api/v1/orders/{order_id}/messages - Отправить сообщение по заказу
+💳 Payments
 
-    GET /api/v1/orders/{order_id}/messages - Получить сообщения по заказу
+    POST /api/v1/payment/create - Create Payment
 
-🏭 Производство (Production)
+    GET /api/v1/payment/{payment_id}/status - Check Payment Status
 
-    POST /api/v1/production/orders/{order_id}/assign - Назначить заказ на фабрику
+    GET /api/v1/payment/{payment_id}/redirect - Payment Redirect
 
-    PATCH /api/v1/production/orders/{order_id}/status - Обновить статус производства
+💰 Balance
 
-💳 Платежи (Payment)
+    GET /api/v1/balance - Get Balance
 
-    POST /api/v1/payment/create - Создать платеж
+    POST /api/v1/balance/deposit - Deposit Balance
 
-    POST /api/v1/payment/webhook - Webhook для обработки платежей
+⚙️ Configuration
 
-    GET /api/v1/payment/{payment_id}/redirect - Перенаправление на оплату
+    GET /api/v1/generation_config/generation - Get Generation Config
 
-    GET /api/v1/payment/{payment_id}/status - Проверить статус платежа
+👍 Feedback
 
-📤 Загрузка файлов (Upload)
+    POST /api/v1/feedback/generation/{generation_id} - Submit Generation Feedback
 
-    POST /api/v1/upload/image - Загрузить изображение для генерации
+📊 History
 
-👤 Пользователи (Users)
+    GET /api/v1/history/generations - Get Generation History
 
-    GET /api/v1/users/me - Получить данные текущего пользователя
+🏭 Production
 
-    PATCH /api/v1/users/me - Обновить данные пользователя
+    POST /api/v1/production/orders/{order_id}/assign - Assign Order
 
-    GET /api/v1/users/{user_id} - Получить данные пользователя по ID
+    PATCH /api/v1/production/orders/{order_id}/status - Update Order Status
 
-👨‍💼 Админка (Admin)
+📤 Upload
 
-    GET /api/v1/admin/generations/stats - Статистика генераций (только для админов)
+    POST /api/v1/upload/image - Upload Image
 
-    POST /api/v1/admin/users/{user_id}/grant-admin - Дать права администратора
+🔗 OAuth
 
-🩺 Системные (System)
+    GET /api/v1/oauth/providers - Get OAuth Providers
 
-    GET /health - Проверка здоровья сервера
+    POST /api/v1/oauth/{provider}/init - Init OAuth
 
-    GET /metrics - Метрики Prometheus
+    GET /api/v1/oauth/{provider}/callback - OAuth Callback
 
-    GET /metrics/health - Health check для метрик
+📱 Phone Auth
 
-📚 Документация
+    POST /api/v1/phone/phone/init - Init Phone Login
 
-    GET /docs - Swagger UI документация
+    POST /api/v1/phone/phone/verify - Verify Phone
 
-    GET /documentation - ReDoc документация
+👨‍💼 Admin
 
-    GET /openapi.json - OpenAPI спецификация
+    POST /api/v1/admin/users/{user_id}/grant-admin - Grant Admin Privileges
 
-🎯 Приоритетные эндпоинты для разработки:
+    GET /api/v1/admin/generations/stats - Generation Statistics
 
-    Срочно: /balance, /generate, /upload/image - основные функции
+🩺 System
 
-    Важно: /auth/*, /users/me - авторизация и профиль
+    GET /health - System Health Check
 
-    Далее: /marketplace/*, /orders/* - маркетплейс и заказы
+📚 Documentation
 
-    Дополнительно: Остальные эндпоинты
+    GET /docs - Swagger UI
+
+    GET /documentation - ReDoc
+
+    GET /openapi.json - OpenAPI Spec
 
 
 For Fronetnders:
 To check all existing routes type these:
 ```bash
+source venv/bin/activate
 cd backend
 python list_routes.py
 
 # This will show you such list of routes (available since 21.08.2025)
-2025-08-21 15:17:49,631 - app.core.logger.logger - INFO - Redis client initialized
+2025-08-25 00:27:51,230 - app.core.logger.logger - INFO - Redis client initialized
 🌐 Все доступные роуты API:
 ==================================================
 GET                  /
 GET                  /api/v1/admin/generations/stats
 POST                 /api/v1/admin/users/{user_id}/grant-admin
+POST                 /api/v1/auth/check-email
 POST                 /api/v1/auth/login
+POST                 /api/v1/auth/quick-register
+POST                 /api/v1/auth/quick-session
 POST                 /api/v1/auth/register
 GET                  /api/v1/balance
 POST                 /api/v1/balance/deposit
@@ -153,6 +161,9 @@ GET                  /api/v1/marketplace/items
 POST                 /api/v1/marketplace/items/{item_id}/cart
 POST                 /api/v1/marketplace/items/{item_id}/order
 POST                 /api/v1/marketplace/orders/direct
+GET                  /api/v1/oauth/providers
+GET                  /api/v1/oauth/{provider}/callback
+POST                 /api/v1/oauth/{provider}/init
 POST                 /api/v1/orders
 GET                  /api/v1/orders
 GET                  /api/v1/orders/{order_id}
@@ -165,6 +176,8 @@ POST                 /api/v1/payment/create
 POST                 /api/v1/payment/webhook
 GET                  /api/v1/payment/{payment_id}/redirect
 GET                  /api/v1/payment/{payment_id}/status
+POST                 /api/v1/phone/phone/init
+POST                 /api/v1/phone/phone/verify
 POST                 /api/v1/production/orders/{order_id}/assign
 PATCH                /api/v1/production/orders/{order_id}/status
 POST                 /api/v1/upload/image
@@ -421,8 +434,10 @@ Our project's current tree:
 │   │   │       ├── history.py
 │   │   │       ├── __init__.py
 │   │   │       ├── marketplace.py
+│   │   │       ├── oauth.py
 │   │   │       ├── orders.py
 │   │   │       ├── payment.py
+│   │   │       ├── phone.py
 │   │   │       ├── production.py
 │   │   │       ├── __pycache__
 │   │   │       ├── upload.py
@@ -446,6 +461,7 @@ Our project's current tree:
 │   │   │   │   ├── prometheus.yml
 │   │   │   │   └── __pycache__
 │   │   │   ├── order_status.py
+│   │   │   ├── password_validation.py
 │   │   │   ├── __pycache__
 │   │   │   │   ├── config.cpython-312.pyc
 │   │   │   │   ├── database.cpython-312.pyc
@@ -598,6 +614,7 @@ Our project's current tree:
 │   │   └── versions
 │   │       ├── 12e666579334_add_is_liked_to_generations.py
 │   │       ├── 222222222222_consolidated_user_timestamps.py
+│   │       ├── 24_08_2025_add_auth_fields_add_auth_fields.py
 │   │       ├── 333333333333_convert_to_kopecks.py
 │   │       ├── 466b80ceb431_initial_migration.py
 │   │       └── __pycache__
@@ -617,7 +634,6 @@ Our project's current tree:
 │   ├── poetry.lock
 │   ├── private.pem
 │   ├── public.pem
-│   ├── __pycache__
 │   ├── pyproject.toml
 │   ├── README.md
 │   ├── requirements-dev.txt
@@ -626,8 +642,10 @@ Our project's current tree:
 │   ├── run_migrations.sh
 │   ├── tests
 │   │   ├── conftest.py
+│   │   ├── sql_injection_test.py
 │   │   ├── test_order.py
 │   │   ├── test_payments.py
+│   │   ├── test_pepper.py
 │   │   └── test_production.py
 │   ├── uploads
 │   │   └── images
@@ -642,23 +660,33 @@ Our project's current tree:
 │       │   ├── blackd
 │       │   ├── distro
 │       │   ├── dmypy
+│       │   ├── doesitcache
 │       │   ├── dotenv
+│       │   ├── dul-receive-pack
+│       │   ├── dul-upload-pack
+│       │   ├── dulwich
 │       │   ├── email_validator
 │       │   ├── faker
 │       │   ├── fastapi
+│       │   ├── findpython
 │       │   ├── httpx
 │       │   ├── isort
 │       │   ├── isort-identify-imports
 │       │   ├── jp.py
+│       │   ├── keyring
 │       │   ├── mako-render
 │       │   ├── mypy
 │       │   ├── mypyc
 │       │   ├── netaddr
 │       │   ├── normalizer
+│       │   ├── pbs-install
 │       │   ├── pip
 │       │   ├── pip3
 │       │   ├── pip3.12
+│       │   ├── pkginfo
+│       │   ├── poetry
 │       │   ├── pygmentize
+│       │   ├── pyproject-build
 │       │   ├── pyrsa-decrypt
 │       │   ├── pyrsa-encrypt
 │       │   ├── pyrsa-keygen
@@ -672,23 +700,65 @@ Our project's current tree:
 │       │   ├── python3.12 -> python3
 │       │   ├── stubgen
 │       │   ├── stubtest
-│       │   └── uvicorn
+│       │   ├── trove-classifiers
+│       │   ├── uvicorn
+│       │   └── virtualenv
 │       ├── include
 │       │   ├── python3.12
 │       │   └── site
 │       │       └── python3.12
 │       ├── lib
+│       │   ├── python3
+│       │   │   └── dist-packages
 │       │   └── python3.12
+│       │       ├── dist-packages
 │       │       └── site-packages
 │       ├── lib64 -> lib
+│       ├── local
+│       │   └── lib
+│       │       └── python3.12
 │       └── pyvenv.cfg
+├── crowdsec
+├── data
+│   ├── postgres  [error opening dir]
+│   └── redis
+│       ├── appendonlydir  [error opening dir]
+│       └── dump.rdb
+├── docker-compose.dev.yml
 ├── docker-compose.yml
+├── loki
+│   └── loki-config.yml
 ├── Makefile
+├── nginx
+│   ├── conf.d
+│   │   └── adtime.conf
+│   ├── logs
+│   ├── nginx.conf
+│   └── ssl
+│       ├── cert.pem
+│       └── key.pem
+├── postgresql.conf
+├── promtail
+│   └── promtail-config.yml
 ├── README.md
+├── redis.conf
 ├── requirements-dev.txt
-└── requirements.txt
+├── requirements.txt
+├── secrets
+│   ├── jwt_secret.txt
+│   ├── kandinsky_api_key.txt
+│   ├── kandinsky_secret_key.txt
+│   ├── postgres_password.txt
+│   ├── redis_password.txt
+│   ├── s3_access_key.txt
+│   ├── s3_secret_key.txt
+│   ├── yookassa_secret_key.txt
+│   └── yookassa_shop_id.txt
+├── security-check.sh
+├── setup-firewall.sh
+└── update-images.sh
 
-40 directories, 246 files
+58 directories, 285 files
 ```
 
 ## Ключевые файлы:

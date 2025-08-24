@@ -38,8 +38,20 @@
         <p>Название: grant_admin_privileges</p>
     </div>
     <div class='endpoint'>
+        <h3>POST /api/v1/auth/check-email</h3>
+        <p>Название: check_email</p>
+    </div>
+    <div class='endpoint'>
         <h3>POST /api/v1/auth/login</h3>
         <p>Название: login</p>
+    </div>
+    <div class='endpoint'>
+        <h3>POST /api/v1/auth/quick-register</h3>
+        <p>Название: quick_register</p>
+    </div>
+    <div class='endpoint'>
+        <h3>POST /api/v1/auth/quick-session</h3>
+        <p>Название: create_quick_session</p>
     </div>
     <div class='endpoint'>
         <h3>POST /api/v1/auth/register</h3>
@@ -98,6 +110,18 @@
         <p>Название: create_direct_order_endpoint</p>
     </div>
     <div class='endpoint'>
+        <h3>GET /api/v1/oauth/providers</h3>
+        <p>Название: get_oauth_providers</p>
+    </div>
+    <div class='endpoint'>
+        <h3>GET /api/v1/oauth/{provider}/callback</h3>
+        <p>Название: oauth_callback</p>
+    </div>
+    <div class='endpoint'>
+        <h3>POST /api/v1/oauth/{provider}/init</h3>
+        <p>Название: init_oauth</p>
+    </div>
+    <div class='endpoint'>
         <h3>POST /api/v1/orders</h3>
         <p>Название: create_order</p>
     </div>
@@ -146,6 +170,14 @@
         <p>Название: check_payment_status</p>
     </div>
     <div class='endpoint'>
+        <h3>POST /api/v1/phone/phone/init</h3>
+        <p>Название: init_phone_login</p>
+    </div>
+    <div class='endpoint'>
+        <h3>POST /api/v1/phone/phone/verify</h3>
+        <p>Название: verify_phone</p>
+    </div>
+    <div class='endpoint'>
         <h3>POST /api/v1/production/orders/{order_id}/assign</h3>
         <p>Название: assign_order</p>
     </div>
@@ -170,15 +202,15 @@
         <p>Название: get_user</p>
     </div>
     <div class='endpoint'>
-        <h3>GET, HEAD /docs</h3>
+        <h3>HEAD, GET /docs</h3>
         <p>Название: swagger_ui_html</p>
     </div>
     <div class='endpoint'>
-        <h3>GET, HEAD /docs/oauth2-redirect</h3>
+        <h3>HEAD, GET /docs/oauth2-redirect</h3>
         <p>Название: swagger_ui_redirect</p>
     </div>
     <div class='endpoint'>
-        <h3>GET, HEAD /documentation</h3>
+        <h3>HEAD, GET /documentation</h3>
         <p>Название: redoc_html</p>
     </div>
     <div class='endpoint'>
@@ -194,7 +226,7 @@
         <p>Название: metrics_health_check</p>
     </div>
     <div class='endpoint'>
-        <h3>GET, HEAD /openapi.json</h3>
+        <h3>HEAD, GET /openapi.json</h3>
         <p>Название: openapi</p>
     </div>
 </body>
