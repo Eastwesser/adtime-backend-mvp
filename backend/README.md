@@ -187,6 +187,9 @@ Build:
 ```bash
 docker-compose up --build  # Builds images and starts all services
 
+# FOR DEVELOPMENT
+docker-compose -f docker-compose.dev.yml up --build
+
 # Backend: http://localhost:8042
 # Prometheus: http://localhost:9090
 ```
