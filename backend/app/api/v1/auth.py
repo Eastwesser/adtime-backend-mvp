@@ -1,11 +1,17 @@
 # backend/app/api/v1/auth.py
 import uuid
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.ext.asyncio import AsyncSession
+from jose import JWTError, jwt
 
-from app.core.dependencies import get_auth_service
+from app.core.dependencies import get_auth_service, get_db
 from app.core.security import create_access_token, create_refresh_token
+from app.core.password_validation import validate_password_strength
+from app.core.rate_limiter import get_login_limiter, get_register_limiter
+from app.core.rate_limiter import RateLimiter
+from app.core.config import settings
 from app.schemas.auth import (
     CheckEmailRequest,
     CheckEmailResponse,
@@ -17,12 +23,9 @@ from app.schemas.auth import (
 )
 from app.schemas.user import UserCreate
 from app.services.auth import AuthService
-from app.core.password_validation import validate_password_strength
-from app.core.rate_limiter import get_login_limiter, get_register_limiter
-from app.core.rate_limiter import RateLimiter
+from app.repositories.user import UserRepository
 
 router = APIRouter(tags=["Authentication"])
-
 
 @router.post(
     "/login",
@@ -44,6 +47,7 @@ router = APIRouter(tags=["Authentication"])
     tags=["Authentication"]
 )
 async def login(
+        response: Response,
         form_data: OAuth2PasswordRequestForm = Depends(),
         auth_service: AuthService = Depends(get_auth_service),
         limiter: RateLimiter = Depends(get_login_limiter),
@@ -70,6 +74,27 @@ async def login(
     )
 
     refresh_token = create_refresh_token(str(user.id))
+
+    # ДОБАВЛЯЕМ УСТАНОВКУ КУК
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=not settings.DEBUG,  # В production всегда True
+        samesite="lax",
+        max_age=1800,  # 30 минут
+        path="/",
+    )
+    
+    response.set_cookie(
+        key="refresh_token", 
+        value=refresh_token,
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite="strict",
+        max_age=604800,  # 7 дней
+        path="/api/v1/auth/refresh",  # Только для refresh
+    )
 
     return UserLoginResponse(
         user=user,
@@ -108,6 +133,7 @@ class EmailExistsError(HTTPException):
     tags=["Authentication"]
 )
 async def register(
+        response: Response, 
         user_create: UserCreate,
         auth_service: AuthService = Depends(get_auth_service),
         limiter: RateLimiter = Depends(get_register_limiter)
@@ -132,6 +158,28 @@ async def register(
             role=user.role
         )
         refresh_token = create_refresh_token(str(user.id))
+
+
+        # После создания токенов добавляем установку кук:
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=not settings.DEBUG,
+            samesite="lax",
+            max_age=1800,
+            path="/",
+        )
+        
+        response.set_cookie(
+            key="refresh_token", 
+            value=refresh_token,
+            httponly=True,
+            secure=not settings.DEBUG,
+            samesite="strict",
+            max_age=604800,
+            path="/api/v1/auth/refresh",
+        )
 
         return UserLoginResponse(
             user=user,
@@ -202,3 +250,93 @@ async def quick_register(
         ),
         requires_2fa=False
     )
+
+@router.post("/refresh")
+async def refresh_token(
+    request: Request,
+    response: Response,
+    session: AsyncSession = Depends(get_db),
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    """Refresh access token using refresh token from cookies"""
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No refresh token provided"
+        )
+    
+    try:
+        # Валидируем refresh token
+        payload = jwt.decode(
+            refresh_token,
+            settings.JWT_PUBLIC_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
+        user_id = payload.get("sub")
+        
+        if not user_id or payload.get("role") != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token"
+            )
+            
+        # Используем auth_service для получения пользователя
+        user_repo = UserRepository(session)
+        user = await user_repo.get(uuid.UUID(user_id))
+            
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found"
+            )
+            
+        # Создаем новые токены
+        new_access_token = create_access_token(
+            user_id,
+            expires_delta=timedelta(minutes=30),
+            role=user.role
+        )
+        
+        new_refresh_token = create_refresh_token(user_id)
+        
+        # Обновляем куки
+        response.set_cookie(
+            key="access_token",
+            value=new_access_token,
+            httponly=True,
+            secure=not settings.DEBUG,
+            samesite="lax",
+            max_age=1800,
+            path="/",
+        )
+        
+        response.set_cookie(
+            key="refresh_token",
+            value=new_refresh_token,
+            httponly=True,
+            secure=not settings.DEBUG,
+            samesite="strict",
+            max_age=604800,
+            path="/api/v1/auth/refresh",
+        )
+        
+        return {
+            "message": "Tokens refreshed successfully",
+            "access_token": new_access_token,
+            "refresh_token": new_refresh_token
+        }
+        
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token"
+        )
+
+@router.post("/logout")
+async def logout(response: Response):
+    """Clear authentication cookies"""
+    response.delete_cookie("access_token", path="/")
+    response.delete_cookie("refresh_token", path="/api/v1/auth/refresh")
+    return {"message": "Logged out successfully"}
+        

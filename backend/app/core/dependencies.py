@@ -1,7 +1,7 @@
 import uuid
-from typing import Annotated
+from typing import Annotated, Optional
 from app.repositories.chat import ChatRepository
-from fastapi import Request
+from fastapi import Request, Cookie
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
@@ -71,14 +71,22 @@ def get_ws_manager() -> ConnectionManager:
 
 
 async def get_current_user(
-        token: str = Depends(oauth2_scheme),
-        session: AsyncSession = Depends(get_db)
+    token: str = Depends(oauth2_scheme),
+    cookie_token: Optional[str] = Cookie(None, alias="access_token"),
+    session: AsyncSession = Depends(get_db)
 ) -> UserResponse:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    # Приоритет отдаем заголовку Authorization, потом кукам
+    token = token or cookie_token
+    
+    if not token:
+        raise credentials_exception
+        
     try:
         payload = jwt.decode(
             token,

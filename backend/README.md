@@ -6,6 +6,10 @@
 
     POST /api/v1/auth/login - User Login (JWT tokens)
 
+    POST /api/v1/auth/refresh - обновление токенов через куки
+
+    POST /api/v1/auth/logout - очистка кук
+
     POST /api/v1/auth/register - User Registration
 
     POST /api/v1/auth/check-email - Check Email availability
@@ -136,7 +140,7 @@ source venv/bin/activate
 cd backend
 python list_routes.py
 
-# This will show you such list of routes (available since 21.08.2025)
+# This will show you such list of routes (available since 26.08.2025)
 2025-08-25 00:27:51,230 - app.core.logger.logger - INFO - Redis client initialized
 🌐 Все доступные роуты API:
 ==================================================
@@ -148,6 +152,8 @@ POST                 /api/v1/auth/login
 POST                 /api/v1/auth/quick-register
 POST                 /api/v1/auth/quick-session
 POST                 /api/v1/auth/register
+POST                 /api/v1/auth/refresh
+POST                 /api/v1/auth/logout
 GET                  /api/v1/balance
 POST                 /api/v1/balance/deposit
 POST                 /api/v1/feedback/generation/{generation_id}
@@ -286,6 +292,24 @@ curl -X POST http://localhost:8000/api/v1/auth/quick-register \
 
 ### 4. OAuth провайдеры
 curl http://localhost:8000/api/v1/oauth/providers
+
+
+# Логин с куками
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -d "username=test@example.com&password=password" \
+  -c cookies.txt
+
+# Проверка что куки установились
+cat cookies.txt
+
+# Refresh токенов
+curl -X POST http://localhost:8000/api/v1/auth/refresh \
+  -b cookies.txt \
+  -c new_cookies.txt
+
+# Logout
+curl -X POST http://localhost:8000/api/v1/auth/logout \
+  -b cookies.txt
 
 
 # 🔐 AUTHENTICATION API ENDPOINTS
