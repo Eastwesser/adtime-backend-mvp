@@ -282,6 +282,129 @@ rate(payment_errors_total[5m])
 rate(order_status_transitions_total[5m])
 ```
 
+#### ENTERPRISE METRICS:
+Real-time (Every 5 Minutes) - SRE Dashboard
+1. Availability & Errors
+```promql
+# Error rate > 1%
+rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 1
+
+# Service downtime
+up{job="adtime-backend"} == 0
+```
+
+2. Latency SLOs
+```promql
+# P95 latency > 2s (SLO violation)
+histogram_quantile(0.95, rate(http_request_latency_seconds_bucket[5m])) > 2
+
+# API endpoints latency
+histogram_quantile(0.95, rate(http_request_latency_seconds_bucket{endpoint=~"/api/.*"}[5m])) > 1
+```
+
+3. Payment Monitoring
+```promql
+# Payment errors > 0
+rate(payment_errors_total[5m]) > 0
+
+# Payment processing time > 5s
+histogram_quantile(0.95, rate(payment_amounts_rub_bucket[5m])) > 5
+```
+#### 📊 Daily - Engineering Team Review
+1. Performance Trends
+```promql
+# Daily average latency by endpoint
+avg_over_time(
+  rate(http_request_latency_seconds_sum{endpoint=~"/api/.*"}[5m]) / 
+  rate(http_request_latency_seconds_count{endpoint=~"/api/.*"}[5m])
+[1d])
+```
+2. Business Metrics
+```promql
+# Daily successful payments
+sum(increase(payment_status_total{status="succeeded"}[1d]))
+
+# Daily failed payments  
+sum(increase(payment_errors_total[1d]))
+```
+
+3. API Usage Patterns
+```promql
+# Top endpoints by traffic
+topk(10, sum by (endpoint) (rate(http_requests_total[1d])))
+```
+
+#### 📈 Weekly - Product & Management Review
+1. Weekly Performance
+```promql
+# Weekly latency trends
+avg_over_time(
+  histogram_quantile(0.95, rate(http_request_latency_seconds_bucket[5m]))
+[7d])
+```
+
+2. Business Growth
+```promql
+# Weekly revenue (example)
+sum(increase(payment_amounts_rub_sum{status="succeeded"}[7d]))
+
+# User engagement trends
+sum by (endpoint) (increase(http_requests_total{endpoint=~"/api/v1/(users|auth).*"}[7d]))
+```
+
+3. System Health
+```promql
+# Weekly error budget consumption
+rate(http_requests_total{status=~"5.."}[7d]) / rate(http_requests_total[7d]) * 100
+```
+
+#### 📋 Monthly - Executive & Strategic Review
+1. Monthly KPIs
+```promql
+# Monthly active endpoints
+count by (endpoint) (
+  rate(http_requests_total[30d]) > 0
+)
+
+# Monthly performance trends
+quantile_over_time(0.95, 
+  rate(http_request_latency_seconds_sum[5m]) / 
+  rate(http_request_latency_seconds_count[5m])
+[30d])
+```
+
+2. Business Intelligence
+```promql
+# Monthly revenue growth
+increase(payment_amounts_rub_sum{status="succeeded"}[30d])
+
+# User base growth  
+increase(http_requests_total{endpoint=~"/api/v1/auth/(register|login)"}[30d])
+```
+#### 🚀 Enterprise Alerting Rules
+Critical (PagerDuty)
+```yaml
+
+- alert: APIDown
+  expr: up{job="adtime-backend"} == 0
+  for: 2m
+
+- alert: HighErrorRate
+  expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+  for: 5m
+```
+
+Warning (Slack)
+```yaml
+- alert: LatencyDegradation
+  expr: histogram_quantile(0.95, rate(http_request_latency_seconds_bucket[5m])) > 3
+  for: 10m
+
+- alert: PaymentIssues
+  expr: rate(payment_errors_total[5m]) > 0
+  for: 5m
+```
+
 Alembic DB Migrations:
 ```bash
 docker-compose run backend alembic upgrade head
