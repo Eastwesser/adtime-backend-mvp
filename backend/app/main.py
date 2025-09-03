@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
 from sqlalchemy import text
+from fastapi.templating import Jinja2Templates
+from fastapi import Request
 
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +10,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 from app.api.v1 import router as api_router
+from app.api.v1.test import router as test_router
 from app.core.config import settings, YooKassaConfig
 from app.core.database import init_db, async_session
 from app.core.errors import APIError, api_error_handler
@@ -53,7 +56,6 @@ async def lifespan(app: FastAPI):
     webhook_manager.register("order.created")(handle_order_webhook)
     
     yield
-    
 
 app = FastAPI(
     title="AdTime API",
@@ -106,6 +108,13 @@ app = FastAPI(
     swagger_ui_parameters={"defaultModelsExpandDepth": -1},
 )
 
+
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/test/oauth")
+async def test_oauth_page(request: Request):
+    return templates.TemplateResponse("test_oauth.html", {"request": request})
+
 # HTTPS редирект в production
 if not settings.DEBUG:
     app.add_middleware(HTTPSRedirectMiddleware)
@@ -144,6 +153,9 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 app.include_router(api_router, prefix="/api/v1")
+app.include_router(test_router, prefix="/api/v1") 
+
+
 
 @app.get("/", include_in_schema=False)
 async def root():

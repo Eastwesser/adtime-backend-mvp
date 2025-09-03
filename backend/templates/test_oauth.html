@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OAuth2 Testing</title>
+    <style>
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        button { margin: 5px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+        pre { background: #f4f4f4; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>OAuth2 Testing Interface</h1>
+    
+    <div class="test-section">
+        <h3>Available Providers:</h3>
+        <button onclick="testOAuth('google')">Test Google OAuth</button>
+        <button onclick="testOAuth('github')">Test GitHub OAuth</button>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Results:</h3>
+        <pre id="results">No tests run yet...</pre>
+    </div>
+
+    <script>
+        async function testOAuth(provider) {
+            const results = document.getElementById('results');
+            results.textContent = `Testing ${provider} OAuth...`;
+            
+            try {
+                const response = await fetch(`/api/v1/oauth/${provider}/init`);
+                const data = await response.json();
+                
+                if (data.auth_url) {
+                    results.textContent = `Success! Redirect URL: ${data.auth_url}\n\nYou can visit this URL to test the OAuth flow.`;
+                } else {
+                    results.textContent = `Error: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                results.textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

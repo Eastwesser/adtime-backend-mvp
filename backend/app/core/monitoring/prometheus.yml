@@ -4,3 +4,6 @@ scrape_configs:
     static_configs:
       - targets: [ "backend:8042" ]
     scrape_interval: 15s
+
+
+    

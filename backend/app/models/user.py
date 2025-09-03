@@ -22,6 +22,21 @@ class User(Base):
     """Модель пользователя системы с ролями и подпиской"""
     __tablename__ = "users"
     
+    ROLE_HIERARCHY = {
+        "admin": 4,
+        "director": 3, 
+        "manager": 2,
+        "user": 1,
+        "designer": 2,  # Designer has same level as manager
+        "guest": 0
+    }
+
+    def has_permission(self, required_role: str) -> bool:
+        """Check if user has sufficient permissions"""
+        user_level = ROLE_HIERARCHY.get(self.role, 0)
+        required_level = ROLE_HIERARCHY.get(required_role, 0)
+        return user_level >= required_level
+    
     # Role constants
     ROLE_USER = "user"
     ROLE_DESIGNER = "designer"

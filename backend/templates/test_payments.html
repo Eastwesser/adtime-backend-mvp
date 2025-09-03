@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Testing</title>
+    <style>
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        button { margin: 5px; padding: 10px; background: #28a745; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #218838; }
+        pre { background: #f4f4f4; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Payment Testing Interface</h1>
+    
+    <div class="test-section">
+        <h3>Test Payment Creation:</h3>
+        <button onclick="testPayment()">Test Create Payment</button>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Results:</h3>
+        <pre id="results">No tests run yet...</pre>
+    </div>
+
+    <script>
+        async function testPayment() {
+            const results = document.getElementById('results');
+            results.textContent = `Testing payment creation...`;
+            
+            try {
+                const response = await fetch(`/api/v1/payment/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        amount: 100.00,
+                        currency: 'RUB',
+                        description: 'Test payment'
+                    })
+                });
+                
+                const data = await response.json();
+                results.textContent = `Payment test result:\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                results.textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

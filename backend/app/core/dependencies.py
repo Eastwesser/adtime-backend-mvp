@@ -6,7 +6,6 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.errors import NotFoundError
 from app.core.webhooks import WebhookManager
 from app.core.database import async_session
@@ -114,6 +113,40 @@ async def get_factory_service(
 ) -> FactoryRepository:
     return FactoryRepository(session)
 
+
+def role_required(required_role: str):
+    """Dependency to require specific role"""
+    def checker(current_user: UserResponse = Depends(get_current_user)):
+        # Define your role hierarchy here directly
+        role_hierarchy = {
+            "admin": 4,
+            "director": 3, 
+            "manager": 2,
+            "user": 1,
+            "designer": 2,
+            "guest": 0
+        }
+        
+        user_level = role_hierarchy.get(current_user.role, 0)
+        required_level = role_hierarchy.get(required_role, 0)
+        
+        if user_level < required_level:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Insufficient permissions. Required: {required_role}"
+            )
+        return current_user
+    return checker
+
+# Specific role dependencies
+def admin_required(user: UserResponse = Depends(get_current_user)):
+    return role_required("admin")(user)
+
+def manager_required(user: UserResponse = Depends(get_current_user)):
+    return role_required("manager")(user)
+
+def director_required(user: UserResponse = Depends(get_current_user)):
+    return role_required("director")(user)
 
 async def get_payment_service(
         session: AsyncSession = Depends(get_db)

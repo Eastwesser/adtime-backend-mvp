@@ -238,9 +238,48 @@ docker volume prune --force
 
 # Then run to test:
 docker-compose -f docker-compose.dev.yml up --build # Dev build for tests
-
+./traffic_bombardment.sh # test load for routes
 # Backend: http://localhost:8042
 # Prometheus: http://localhost:9090
+```
+
+# Grafana
+sum by (endpoint) (rate(http_requests_total[5m])) 
+
+#### TEST GRAFANA:
+1. Основные метрики трафика:
+```promql
+##### Общее количество запросов в секунду
+rate(http_requests_total[5m])
+
+##### Распределение запросов по endpoint'ам  
+sum by (endpoint) (rate(http_requests_total[5m]))
+```
+
+2. Метрики задержек (Latency):
+```promql
+# Средняя задержка (простая для понимания)
+rate(http_request_latency_seconds_sum[5m]) / rate(http_request_latency_seconds_count[5m])
+
+# 95-й перцентиль задержек (профессиональная метрика)
+histogram_quantile(0.95, rate(http_request_latency_seconds_bucket[5m]))
+```
+3. Метрики ошибок:
+```promql
+# Rate of HTTP errors (5xx status codes)
+rate(http_requests_total{status=~"5.."}[5m])
+
+# Error rate percentage
+rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100
+```
+
+4. Бизнес-метрики:
+```promql
+# Payment errors
+rate(payment_errors_total[5m])
+
+# Order status transitions  
+rate(order_status_transitions_total[5m])
 ```
 
 Alembic DB Migrations:
@@ -400,6 +439,28 @@ curl -X POST http://localhost:8042/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"user@example.com", "password":"password123"}'
 ```
+
+## PROMETHEUS CHECK
+
+```bash
+# Check if metrics endpoint works
+curl http://localhost:8042/metrics
+
+# Check health endpoint
+curl http://localhost:8042/health
+
+# Check if Prometheus is running
+curl http://localhost:9090/-/healthy
+```
+After starting your containers, go to http://localhost:3000 and:
+
+    Login with admin/admin
+
+Add Prometheus data source:
+
+    URL: http://prometheus:9090
+
+    Access: Server (default)
 
 ## 📋 RESPONSE EXAMPLES
 Quick Session Response:
