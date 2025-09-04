@@ -405,6 +405,38 @@ Warning (Slack)
   for: 5m
 ```
 
+Test generation:
+
+
+SQL:
+SELECT id, email, balance FROM users WHERE email = 'badass@example.com';
+UPDATE users SET balance = 1000 WHERE email = 'badass@example.com';
+\dt
+INSERT INTO subscriptions (user_id, plan, expires_at, remaining_generations)
+VALUES (
+  (SELECT id FROM users WHERE email = 'badass@example.com'),
+  'test', 
+  NOW() + INTERVAL '1 year', 
+  10
+);
+
+QUICK CURL KANDINSKY TEST:
+# First login properly
+curl -X POST http://localhost:8042/api/v1/auth/login \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=badass@example.com&password=B@basser129dick&grant_type=password"
+
+# Then use the token from the response to generate
+curl -X POST http://localhost:8042/api/v1/generate \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN_HERE" \
+  -d '{
+    "prompt": "A cute corgi in a spacesuit",
+    "model_version": "kandinsky-2.1",
+    "width": 1024,
+    "height": 1024
+  }'
+
 Alembic DB Migrations:
 ```bash
 docker-compose run backend alembic upgrade head

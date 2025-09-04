@@ -127,3 +127,9 @@ class GenerationRepository(BaseRepository[Generation]):
         result = await self.session.execute(query)
         return result.scalars().all()
     
+    async def get_user_generations(self, user_id: UUID) -> List[Generation]:
+        """Get all generations for a specific user"""
+        result = await self.session.execute(
+            select(Generation).where(Generation.user_id == user_id)
+        )
+        return result.scalars().all()

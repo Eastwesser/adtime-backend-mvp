@@ -18,7 +18,7 @@ class UserBase(BaseModel):
     email: EmailStr = Field(..., max_length=255)
     role: Literal["user", "designer", "admin"] = Field(default="user")
     created_at: Optional[datetime] = Field(default=None)
-
+    
 
 class UserCreate(UserBase):
     """Схема для создания пользователя.
@@ -32,7 +32,7 @@ class UserCreate(UserBase):
         description="Must contain at least 8 characters"
     )
     telegram_id: Optional[str] = Field(None, max_length=100)
-
+    
 class UserResponse(UserBase):
     """Схема для ответа с данными пользователя.
 
@@ -44,7 +44,8 @@ class UserResponse(UserBase):
     id: uuid.UUID
     telegram_id: Optional[str] = Field(None, max_length=100)
     created_at: Optional[datetime] = None
-
+    balance: Optional[int] = 0  # ← ADD THIS LINE
+    
     model_config = ConfigDict(
         from_attributes=True,
         json_schema_extra={

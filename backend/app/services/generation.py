@@ -56,8 +56,13 @@ class GenerationService:
             )
 
         # Создаем запись в БД
+        generation_data = generation_in.model_dump()
+        # Remove width and height since Generation model doesn't accept them
+        generation_data.pop("width", None)
+        generation_data.pop("height", None)
+
         db_generation = await self.generation_repo.create({
-            **generation_in.model_dump(),
+            **generation_data,
             "user_id": user_id,
             "status": "pending"
         })

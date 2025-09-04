@@ -246,13 +246,21 @@ async def get_marketplace_service(
 
 async def get_rate_limiter(request: Request) -> RateLimiter:
     """Dependency that checks rate limits"""
-    limiter = RateLimiter(
-        redis=redis_client,
-        key=f"rate_limit:{request.client.host}",  # Or use user_id if authenticated
-        limit="100/minute"
-    )
-    await limiter.check()
+    limiter = RateLimiter("100/minute")
+    # The check_request method now handles the key internally
+    await limiter.check_request(f"rate_limit:{request.client.host}")
     return limiter
+
+# async def get_rate_limiter(request: Request) -> RateLimiter:
+#     """Dependency that checks rate limits"""
+#     limiter = RateLimiter(
+#         redis=redis_client,
+#         key=f"rate_limit:{request.client.host}",  # Or use user_id if authenticated
+#         limit="100/minute"
+#     )
+#     await limiter.check()
+#     # return limiter
+#     return None
 
 async def get_webhook_manager() -> WebhookManager:
     return WebhookManager()
