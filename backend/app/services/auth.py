@@ -9,10 +9,11 @@ from sqlalchemy.exc import IntegrityError, DBAPIError
 from jose import jwt, ExpiredSignatureError, JWTError
 from passlib.context import CryptContext
 
-
 from app.core.config import settings
+from app.core.logger import logger
 from app.models.user import User
 from app.repositories.user import UserRepository
+from app.repositories.subscription import SubscriptionRepository
 from app.schemas.auth import Token
 from app.schemas.user import UserCreate, UserResponse
 
@@ -29,8 +30,9 @@ class AuthService:
     - Хеширование паролей
     """
 
-    def __init__(self, user_repo: UserRepository):
+    def __init__(self, user_repo: UserRepository, subscription_repo: SubscriptionRepository):  # <- Изменяем
         self.user_repo = user_repo
+        self.subscription_repo = subscription_repo  # <- Добавляем
 
     @staticmethod
     def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -164,6 +166,25 @@ class AuthService:
             user = await self.user_repo.create(user_data)
             await self.user_repo.session.flush()
             await self.user_repo.session.refresh(user)
+
+            # ★★★★ ИСПРАВЛЕННЫЙ КОД ДЛЯ СОЗДАНИЯ ПОДПИСКИ ★★★★
+            if not is_guest:
+                try:
+                    # Создаем подписку НАПРЯМУЮ через репозиторий
+                    subscription_data = {
+                        "user_id": user.id,
+                        "plan": "free",
+                        "remaining_generations": 5, # Явно указываем квоту
+                        "is_active": True,
+                        "expires_at": datetime.now(timezone.utc) + timedelta(days=30)
+                    }
+                    await self.subscription_repo.create(subscription_data)
+                    # Не забудь сделать flush/commit, если это не делает репозиторий автоматически
+                    await self.user_repo.session.flush()
+                except Exception as e:
+                    logger.error(f"Failed to create subscription for user {user.id}: {str(e)}")
+            # ★★★★ КОНЕЦ ИСПРАВЛЕНИЯ ★★★★
+
             return UserResponse.model_validate(user)
 
         except HTTPException:

@@ -159,7 +159,8 @@ async def get_auth_service(
         session: AsyncSession = Depends(get_db)
 ) -> AuthService:
     user_repo = UserRepository(session)
-    return AuthService(user_repo)
+    subscription_repo = SubscriptionRepository(session) # <- Добавляем
+    return AuthService(user_repo, subscription_repo)    # <- Передаем оба репозитория
 
 
 async def get_generation_service(

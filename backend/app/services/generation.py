@@ -49,6 +49,7 @@ class GenerationService:
         - Kandinsky API integration
         - Automatic status tracking
         """
+        # UNCOMMENT THESE LINES BELOW, THEY CHECK QUOTA AND MONEY!!!
         if not await self._check_quota(user_id):
             raise HTTPException(
                 status_code=402,
